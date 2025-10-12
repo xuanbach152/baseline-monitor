@@ -1,0 +1,40 @@
+# === Node.js / Frontend ===
+node_modules/
+dist/
+dist-ssr/
+*.local
+*.log
+
+# === Python / Backend ===
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+
+# === IDE / System files ===
+.vscode/
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# === Build / Temp ===
+*.tmp
+*.bak
+*.swp
+*.cache
+logs/
+*.log
+
+# === Docker / Environment ===
+.env
+*.pid
+
+# === OS / Misc ===
+Thumbs.db
