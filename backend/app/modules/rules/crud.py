@@ -1,0 +1,83 @@
+"""Rule CRUD operations."""
+from sqlalchemy.orm import Session
+from typing import Optional, List
+
+from .models import Rule
+from .schemas import RuleCreate, RuleUpdate
+
+
+def get_rule(db: Session, rule_id: int) -> Optional[Rule]:
+    """Get rule by ID."""
+    return db.query(Rule).filter(Rule.id == rule_id).first()
+
+
+def get_rule_by_name(db: Session, name: str) -> Optional[Rule]:
+    """Get rule by name."""
+    return db.query(Rule).filter(Rule.name == name).first()
+
+
+def get_rules(
+    db: Session,
+    skip: int = 0,
+    limit: int = 100,
+    active: Optional[bool] = None,
+    severity: Optional[str] = None
+) -> List[Rule]:
+    """Get list of rules with optional filters."""
+    query = db.query(Rule)
+    
+    if active is not None:
+        query = query.filter(Rule.active == active)
+    
+    if severity:
+        query = query.filter(Rule.severity == severity)
+    
+    return query.offset(skip).limit(limit).all()
+
+
+def create_rule(db: Session, rule: RuleCreate) -> Rule:
+    """Create new rule."""
+    db_rule = Rule(**rule.model_dump())
+    db.add(db_rule)
+    db.commit()
+    db.refresh(db_rule)
+    return db_rule
+
+
+def update_rule(db: Session, rule_id: int, rule_update: RuleUpdate) -> Optional[Rule]:
+    """Update rule."""
+    db_rule = get_rule(db, rule_id)
+    if not db_rule:
+        return None
+    
+    update_data = rule_update.model_dump(exclude_unset=True)
+    
+    for field, value in update_data.items():
+        setattr(db_rule, field, value)
+    
+    db.commit()
+    db.refresh(db_rule)
+    return db_rule
+
+
+def delete_rule(db: Session, rule_id: int) -> bool:
+    """Delete rule."""
+    db_rule = get_rule(db, rule_id)
+    if not db_rule:
+        return False
+    
+    db.delete(db_rule)
+    db.commit()
+    return True
+
+
+def toggle_rule_active(db: Session, rule_id: int) -> Optional[Rule]:
+    """Toggle rule active status."""
+    db_rule = get_rule(db, rule_id)
+    if not db_rule:
+        return None
+    
+    db_rule.active = not db_rule.active
+    db.commit()
+    db.refresh(db_rule)
+    return db_rule
