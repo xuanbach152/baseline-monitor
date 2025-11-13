@@ -18,7 +18,7 @@ class Agent(Base):
     is_online = Column(Boolean, default=False)
     last_checkin = Column(DateTime(timezone=True), default=func.now())
     
-    # Relationships
-    configurations = relationship("Configuration", back_populates="agent")
+    # Relationships will be added when implementing violations/configurations modules
+    # configurations = relationship("Configuration", back_populates="agent")
     violations = relationship("Violation", back_populates="agent")
-    anomaly_history = relationship("AnomalyHistory", back_populates="agent")
+    # anomaly_history = relationship("AnomalyHistory", back_populates="agent")

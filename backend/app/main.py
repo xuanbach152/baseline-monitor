@@ -11,6 +11,7 @@ from app.core.database import engine, Base
 from app.modules.users.models import User
 from app.modules.rules.models import Rule
 from app.modules.agents.models import Agent
+from app.modules.violations.models import Violation
 
 # Create all tables (for development - in production use Alembic migrations)
 # Base.metadata.create_all(bind=engine)

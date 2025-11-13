@@ -3,14 +3,21 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 from typing import Optional, List
 from datetime import datetime
+from fastapi import HTTPException, status
 
 from .models import Agent
 from .schemas import AgentCreate, AgentUpdate, AgentHeartbeat
 
 
-def get_agent(db: Session, agent_id: int) -> Optional[Agent]:
-    """Get agent by ID."""
-    return db.query(Agent).filter(Agent.id == agent_id).first()
+def get_agent(db: Session, agent_id: int) -> Agent:
+    """Get agent by ID. Raises 404 if not found."""
+    db_agent = db.query(Agent).filter(Agent.id == agent_id).first()
+    if not db_agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Agent with id {agent_id} not found"
+        )
+    return db_agent
 
 
 def get_agent_by_hostname(db: Session, hostname: str) -> Optional[Agent]:
@@ -38,7 +45,14 @@ def get_agents(
 
 
 def create_agent(db: Session, agent: AgentCreate) -> Agent:
-    """Create/register new agent."""
+    """Create/register new agent. Raises 400 if hostname already exists."""
+    # Check if hostname already exists
+    if get_agent_by_hostname(db, agent.hostname):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Agent with this hostname already exists"
+        )
+    
     db_agent = Agent(**agent.model_dump(), is_online=True)
     db.add(db_agent)
     db.commit()
@@ -46,13 +60,17 @@ def create_agent(db: Session, agent: AgentCreate) -> Agent:
     return db_agent
 
 
-def update_agent(db: Session, agent_id: int, agent_update: AgentUpdate) -> Optional[Agent]:
-    """Update agent."""
-    db_agent = get_agent(db, agent_id)
-    if not db_agent:
-        return None
+def update_agent(db: Session, agent_id: int, agent_update: AgentUpdate) -> Agent:
+    """Update agent. Raises 404 if not found."""
+    db_agent = get_agent(db, agent_id)  # ← Auto raise 404
     
     update_data = agent_update.model_dump(exclude_unset=True)
+    
+    if not update_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No fields to update"
+        )
     
     for field, value in update_data.items():
         setattr(db_agent, field, value)
@@ -62,26 +80,21 @@ def update_agent(db: Session, agent_id: int, agent_update: AgentUpdate) -> Optio
     return db_agent
 
 
-def delete_agent(db: Session, agent_id: int) -> bool:
-    """Delete agent."""
-    db_agent = get_agent(db, agent_id)
-    if not db_agent:
-        return False
+def delete_agent(db: Session, agent_id: int) -> None:
+    """Delete agent. Raises 404 if not found."""
+    db_agent = get_agent(db, agent_id)  # ← Auto raise 404
     
     db.delete(db_agent)
     db.commit()
-    return True
 
 
 def update_agent_heartbeat(
     db: Session,
     agent_id: int,
     heartbeat: AgentHeartbeat
-) -> Optional[Agent]:
-    """Update agent heartbeat/keep-alive."""
-    db_agent = get_agent(db, agent_id)
-    if not db_agent:
-        return None
+) -> Agent:
+    """Update agent heartbeat/keep-alive. Raises 404 if not found."""
+    db_agent = get_agent(db, agent_id)  # ← Auto raise 404
     
     db_agent.last_checkin = datetime.now()
     db_agent.is_online = heartbeat.is_online

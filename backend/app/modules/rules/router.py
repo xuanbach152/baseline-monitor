@@ -10,6 +10,10 @@ from .schemas import RuleCreate, RuleUpdate, RuleResponse
 router = APIRouter(prefix="/rules", tags=["rules"])
 
 
+# ============================================================================
+# CREATE Operations
+# ============================================================================
+
 @router.post("/", response_model=RuleResponse, status_code=status.HTTP_201_CREATED)
 def create_rule(rule: RuleCreate, db: Session = Depends(get_db)):
     """
@@ -20,15 +24,12 @@ def create_rule(rule: RuleCreate, db: Session = Depends(get_db)):
     - **check_expression**: Command/script to check compliance
     - **severity**: low, medium, high, or critical
     """
-    # Check if rule name exists
-    if crud.get_rule_by_name(db, rule.name):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Rule with this name already exists"
-        )
-    
     return crud.create_rule(db, rule)
 
+
+# ============================================================================
+# READ Operations - List
+# ============================================================================
 
 @router.get("/", response_model=List[RuleResponse])
 def list_rules(
@@ -46,23 +47,24 @@ def list_rules(
     - **active**: Filter by active status
     - **severity**: Filter by severity (low, medium, high, critical)
     """
-    rules = crud.get_rules(db, skip=skip, limit=limit, active=active, severity=severity)
-    return rules
+    return crud.get_rules(db, skip=skip, limit=limit, active=active, severity=severity)
 
+
+# ============================================================================
+# READ Operations - By ID (must be last in GET)
+# ============================================================================
 
 @router.get("/{rule_id}", response_model=RuleResponse)
 def get_rule(rule_id: int, db: Session = Depends(get_db)):
     """
     Get rule by ID.
     """
-    db_rule = crud.get_rule(db, rule_id)
-    if not db_rule:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Rule not found"
-        )
-    return db_rule
+    return crud.get_rule(db, rule_id)
 
+
+# ============================================================================
+# UPDATE Operations
+# ============================================================================
 
 @router.put("/{rule_id}", response_model=RuleResponse)
 def update_rule(rule_id: int, rule_update: RuleUpdate, db: Session = Depends(get_db)):
@@ -71,27 +73,7 @@ def update_rule(rule_id: int, rule_update: RuleUpdate, db: Session = Depends(get
     
     All fields are optional. Only provided fields will be updated.
     """
-    db_rule = crud.update_rule(db, rule_id, rule_update)
-    if not db_rule:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Rule not found"
-        )
-    return db_rule
-
-
-@router.delete("/{rule_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_rule(rule_id: int, db: Session = Depends(get_db)):
-    """
-    Delete rule.
-    """
-    success = crud.delete_rule(db, rule_id)
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Rule not found"
-        )
-    return None
+    return crud.update_rule(db, rule_id, rule_update)
 
 
 @router.patch("/{rule_id}/toggle", response_model=RuleResponse)
@@ -101,10 +83,20 @@ def toggle_rule_active(rule_id: int, db: Session = Depends(get_db)):
     
     Quick way to enable/disable a rule without full update.
     """
-    db_rule = crud.toggle_rule_active(db, rule_id)
-    if not db_rule:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Rule not found"
-        )
-    return db_rule
+    return crud.toggle_rule_active(db, rule_id)
+
+
+# ============================================================================
+# DELETE Operations
+# ============================================================================
+
+@router.delete("/{rule_id}")
+def delete_rule(rule_id: int, db: Session = Depends(get_db)):
+    """
+    Delete rule.
+    """
+    crud.delete_rule(db, rule_id)
+    return {
+        "message": "Rule deleted successfully",
+        "rule_id": rule_id
+    }

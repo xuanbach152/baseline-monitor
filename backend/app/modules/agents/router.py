@@ -10,6 +10,10 @@ from .schemas import AgentCreate, AgentUpdate, AgentResponse, AgentHeartbeat
 router = APIRouter(prefix="/agents", tags=["agents"])
 
 
+# ============================================================================
+# CREATE Operations
+# ============================================================================
+
 @router.post("/", response_model=AgentResponse, status_code=status.HTTP_201_CREATED)
 def register_agent(agent: AgentCreate, db: Session = Depends(get_db)):
     """
@@ -20,15 +24,12 @@ def register_agent(agent: AgentCreate, db: Session = Depends(get_db)):
     - **os**: Operating system (e.g., "Ubuntu 22.04")
     - **version**: Agent software version
     """
-    # Check if hostname already exists
-    if crud.get_agent_by_hostname(db, agent.hostname):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Agent with this hostname already exists"
-        )
-    
     return crud.create_agent(db, agent)
 
+
+# ============================================================================
+# READ Operations - List
+# ============================================================================
 
 @router.get("/", response_model=List[AgentResponse])
 def list_agents(
@@ -46,9 +47,12 @@ def list_agents(
     - **is_online**: Filter by online status
     - **os**: Filter by OS (partial match)
     """
-    agents = crud.get_agents(db, skip=skip, limit=limit, is_online=is_online, os=os)
-    return agents
+    return crud.get_agents(db, skip=skip, limit=limit, is_online=is_online, os=os)
 
+
+# ============================================================================
+# READ Operations - Special Routes (must be before /{id})
+# ============================================================================
 
 @router.get("/stats")
 def get_agents_stats(db: Session = Depends(get_db)):
@@ -64,19 +68,21 @@ def get_agents_stats(db: Session = Depends(get_db)):
     }
 
 
+# ============================================================================
+# READ Operations - By ID (must be last in GET)
+# ============================================================================
+
 @router.get("/{agent_id}", response_model=AgentResponse)
 def get_agent(agent_id: int, db: Session = Depends(get_db)):
     """
     Get agent by ID.
     """
-    db_agent = crud.get_agent(db, agent_id)
-    if not db_agent:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Agent not found"
-        )
-    return db_agent
+    return crud.get_agent(db, agent_id)
 
+
+# ============================================================================
+# UPDATE Operations
+# ============================================================================
 
 @router.put("/{agent_id}", response_model=AgentResponse)
 def update_agent(agent_id: int, agent_update: AgentUpdate, db: Session = Depends(get_db)):
@@ -85,27 +91,7 @@ def update_agent(agent_id: int, agent_update: AgentUpdate, db: Session = Depends
     
     All fields are optional. Only provided fields will be updated.
     """
-    db_agent = crud.update_agent(db, agent_id, agent_update)
-    if not db_agent:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Agent not found"
-        )
-    return db_agent
-
-
-@router.delete("/{agent_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_agent(agent_id: int, db: Session = Depends(get_db)):
-    """
-    Delete agent.
-    """
-    success = crud.delete_agent(db, agent_id)
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Agent not found"
-        )
-    return None
+    return crud.update_agent(db, agent_id, agent_update)
 
 
 @router.post("/{agent_id}/heartbeat", response_model=AgentResponse)
@@ -119,10 +105,21 @@ def agent_heartbeat(
     
     Agents should call this periodically to update online status and last_checkin time.
     """
-    db_agent = crud.update_agent_heartbeat(db, agent_id, heartbeat)
-    if not db_agent:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Agent not found"
-        )
-    return db_agent
+    return crud.update_agent_heartbeat(db, agent_id, heartbeat)
+
+
+# ============================================================================
+# DELETE Operations
+# ============================================================================
+
+@router.delete("/{agent_id}")
+def delete_agent(agent_id: int, db: Session = Depends(get_db)):
+    """
+    Delete agent.
+    """
+    crud.delete_agent(db, agent_id)
+    
+    return {
+        "message": "Agent deleted successfully",
+        "agent_id": agent_id
+    }
