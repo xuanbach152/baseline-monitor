@@ -1,0 +1,69 @@
+# ===================================================
+# Agent Configuration File
+# ===================================================
+
+agent:
+  # Hostname sẽ được auto-detect từ system nếu không có
+  # Hoặc có thể tự đặt tên
+  hostname: "dev-server"
+  
+  # Tên hiển thị
+  name: "Ubuntu Development Server"
+  
+  # Loại OS: "ubuntu" hoặc "windows"
+  os_type: "ubuntu"
+  
+  # Agent sẽ TỰ ĐỘNG đăng ký với backend và nhận agent_id
+  # Không cần điền agent_id thủ công nữa!
+  
+  # Loại OS: "ubuntu" hoặc "windows"
+  os_type: "ubuntu"
+  
+  # Hostname (optional)
+  hostname: "dev-server"
+
+backend:
+  # URL của Backend API
+  api_url: "http://localhost:8000"
+  
+  # JWT token - Lấy từ: POST /api/v1/auth/login
+  # Để trống nếu chưa có, sẽ cập nhật sau
+  api_token: ""
+  
+  # Timeout cho mỗi request (giây)
+  timeout: 30
+  
+  # Số lần retry khi request fail
+  retry_attempts: 3
+
+scanner:
+  # Thời gian giữa mỗi lần scan (giây)
+  # 3600 = 1 giờ, 1800 = 30 phút, 300 = 5 phút
+  scan_interval: 300
+  
+  # Đường dẫn tới file rules JSON
+  rules_path: "./agent/rules/ubuntu_rules.json"
+  
+  # Timeout cho mỗi command (giây)
+  command_timeout: 10
+  
+  # Có gửi kết quả PASS lên backend không?
+  # false = chỉ gửi FAIL và ERROR (tiết kiệm bandwidth)
+  report_pass_results: false
+
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: "DEBUG"
+  
+  # Đường dẫn file log
+  log_file: "./logs/agent.log"
+  
+  # Kích thước tối đa của 1 file log (bytes)
+  # 10485760 = 10MB
+  max_bytes: 10485760
+  
+  # Số file log backup giữ lại
+  backup_count: 5
+  
+  # Có in log ra console không?
+  console_output: true

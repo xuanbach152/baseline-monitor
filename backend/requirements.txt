@@ -20,6 +20,8 @@ MarkupSafe==3.0.3          # Hỗ trợ Mako và Jinja2 escape HTML
 pydantic==2.9.2            # Validate dữ liệu request/response
 python-dotenv==1.0.1       # Đọc file .env để lấy biến môi trường
 pydantic-settings==2.6.1   
+PyYAML==6.0.2              # Đọc config YAML cho agent
+psutil==5.9.8              # Thu thập thông tin hệ thống (CPU, RAM, Disk) cho agent   
 
 
 

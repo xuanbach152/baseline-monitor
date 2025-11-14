@@ -45,15 +45,43 @@ def get_agents(
 
 
 def create_agent(db: Session, agent: AgentCreate) -> Agent:
-    """Create/register new agent. Raises 400 if hostname already exists."""
-    # Check if hostname already exists
-    if get_agent_by_hostname(db, agent.hostname):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Agent with this hostname already exists"
-        )
+    """
+    Register new agent or update existing one (UPSERT).
     
-    db_agent = Agent(**agent.model_dump(), is_online=True)
+    Auto-registration logic:
+    - If hostname exists: Update agent info (IP, OS, version, mark online)
+    - If hostname not exists: Create new agent
+    
+    This allows agents to auto-register on first run without manual setup.
+    
+    Args:
+        db: Database session
+        agent: Agent data to create/update
+    
+    Returns:
+        Agent: Created or updated agent object
+    """
+    # Check if agent with this hostname already exists
+    existing_agent = get_agent_by_hostname(db, agent.hostname)
+    
+    if existing_agent:
+        # Agent exists → Update information
+        existing_agent.ip_address = agent.ip_address
+        existing_agent.os = agent.os
+        existing_agent.version = agent.version
+        existing_agent.is_online = True
+        existing_agent.last_checkin = datetime.now()
+        
+        db.commit()
+        db.refresh(existing_agent)
+        return existing_agent
+    
+    # Agent doesn't exist → Create new
+    db_agent = Agent(
+        **agent.model_dump(),
+        is_online=True,
+        last_checkin=datetime.now()
+    )
     db.add(db_agent)
     db.commit()
     db.refresh(db_agent)
