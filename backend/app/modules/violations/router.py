@@ -6,7 +6,8 @@ from typing import List, Optional
 from app.core.dependencies import get_db
 from . import crud
 from .schemas import (
-    ViolationCreate, 
+    ViolationCreate,
+    ViolationCreateFromAgent,
     ViolationUpdate, 
     ViolationResponse,
     ViolationWithDetail,
@@ -26,11 +27,45 @@ def create_violation(violation: ViolationCreate, db: Session = Depends(get_db)):
     Create a new violation record.
     
     - **agent_id**: ID of the agent where violation was detected
-    - **rule_id**: ID of the rule that was violated
+    - **rule_id**: ID of the rule that was violated (Integer)
     - **message**: Description of the violation
     - **confidence_score**: Confidence level (0.0-1.0)
     """
     return crud.create_violation(db, violation)
+
+
+@router.post("/from-agent", response_model=ViolationResponse, status_code=status.HTTP_201_CREATED)
+def create_violation_from_agent(violation: ViolationCreateFromAgent, db: Session = Depends(get_db)):
+    """
+    Create violation from agent (uses agent_rule_id instead of rule_id).
+    
+    Agents report violations using agent_rule_id (e.g., 'UBU-01'), 
+    this endpoint converts it to backend rule_id before saving.
+    
+    - **agent_id**: ID of the agent
+    - **agent_rule_id**: Agent-side rule ID (e.g., 'UBU-01', 'WIN-03')
+    - **message**: Description of the violation
+    - **confidence_score**: Confidence level (0.0-1.0)
+    """
+    # Lookup rule by agent_rule_id
+    from app.modules.rules import crud as rules_crud
+    rule = rules_crud.get_rule_by_agent_id(db, violation.agent_rule_id)
+    
+    if not rule:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Rule with agent_rule_id '{violation.agent_rule_id}' not found"
+        )
+    
+    # Convert to ViolationCreate with Integer rule_id
+    violation_data = ViolationCreate(
+        agent_id=violation.agent_id,
+        rule_id=rule.id,  # Convert agent_rule_id -> rule.id
+        message=violation.message,
+        confidence_score=violation.confidence_score
+    )
+    
+    return crud.create_violation(db, violation_data)
 
 
 # ============================================================================

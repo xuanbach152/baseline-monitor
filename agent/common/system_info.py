@@ -275,7 +275,7 @@ def get_agent_info(include_system_stats: bool = False) -> Dict[str, any]:
         'ip_address': get_local_ip(),
         'os': get_os_info(),
         'mac_address': get_mac_address(),
-        'version': '1.0.0'  # Agent version (hardcode hoặc từ config)
+        'version': '1.0.0'  
     }
     
     # Optional: Public IP
@@ -299,23 +299,23 @@ def get_agent_info(include_system_stats: bool = False) -> Dict[str, any]:
 if __name__ == "__main__":
     """Test system info module."""
     print("=" * 60)
-    print("🖥️  SYSTEM INFORMATION")
+    print("SYSTEM INFORMATION")
     print("=" * 60)
     
-    print("\n📋 Basic Info:")
+    print("\n Basic Info:")
     print(f"   Hostname:     {get_hostname()}")
     print(f"   Local IP:     {get_local_ip()}")
     print(f"   OS:           {get_os_info()}")
     print(f"   MAC Address:  {get_mac_address()}")
     
-    print("\n🌐 Network:")
+    print("\n Network:")
     public_ip = get_public_ip()
     if public_ip:
         print(f"   Public IP:    {public_ip}")
     else:
         print(f"   Public IP:    Unable to fetch")
     
-    print("\n💻 CPU:")
+    print("\n CPU:")
     cpu = get_cpu_info()
     if cpu:
         print(f"   Physical Cores: {cpu.get('physical_cores')}")
@@ -323,14 +323,14 @@ if __name__ == "__main__":
         print(f"   Usage:          {cpu.get('cpu_percent')}%")
         print(f"   Frequency:      {cpu.get('frequency_mhz')} MHz")
     
-    print("\n💾 Memory:")
+    print("\n Memory:")
     mem = get_memory_info()
     if mem:
         print(f"   Total:      {mem.get('total_gb')} GB")
         print(f"   Available:  {mem.get('available_gb')} GB")
         print(f"   Used:       {mem.get('used_percent')}%")
     
-    print("\n💿 Disk:")
+    print("\n Disk:")
     disk = get_disk_info()
     if disk:
         print(f"   Total:  {disk.get('total_gb')} GB")
@@ -338,11 +338,11 @@ if __name__ == "__main__":
         print(f"   Free:   {disk.get('free_gb')} GB")
     
     print("\n" + "=" * 60)
-    print("📦 Agent Registration Data:")
+    print(" Agent Registration Data:")
     print("=" * 60)
     
     agent_info = get_agent_info(include_system_stats=True)
     import json
     print(json.dumps(agent_info, indent=2))
     
-    print("\n✅ System info collected successfully!")
+    print("\n System info collected successfully!")

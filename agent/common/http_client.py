@@ -1,7 +1,5 @@
 """
 HTTP Client Module
-==================
-HTTP client để giao tiếp với backend API.
 """
 
 import time
@@ -68,7 +66,7 @@ class BackendAPIClient:
         
         for attempt in range(self.retry_attempts):
             try:
-                logger.debug(f"🌐 {method} {url} (attempt {attempt + 1}/{self.retry_attempts})")
+                logger.debug(f" {method} {url} (attempt {attempt + 1}/{self.retry_attempts})")
                 
                 response = requests.request(
                     method=method,
@@ -81,51 +79,51 @@ class BackendAPIClient:
                 
                 # Check status code
                 if response.status_code == 200 or response.status_code == 201:
-                    logger.debug(f"✅ Success: {response.status_code}")
+                    logger.debug(f" Success: {response.status_code}")
                     return response.json()
                 
                 elif response.status_code == 401:
-                    logger.error("❌ Authentication failed: Invalid token")
+                    logger.error("Authentication failed: Invalid token")
                     return None
                 
                 elif response.status_code == 404:
-                    logger.error(f"❌ Not found: {url}")
+                    logger.error(f" Not found: {url}")
                     return None
                 
                 else:
-                    logger.warning(f"⚠️  Status {response.status_code}: {response.text}")
+                    logger.warning(f"  Status {response.status_code}: {response.text}")
                     
                     # Retry nếu là lỗi server (5xx)
                     if response.status_code >= 500:
                         if attempt < self.retry_attempts - 1:
                             wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
-                            logger.info(f"🔄 Retrying in {wait_time}s...")
+                            logger.info(f" Retrying in {wait_time}s...")
                             time.sleep(wait_time)
                             continue
                     
                     return None
             
             except requests.exceptions.Timeout:
-                logger.error(f"⏱️  Timeout after {self.timeout}s")
+                logger.error(f" Timeout after {self.timeout}s")
                 if attempt < self.retry_attempts - 1:
-                    logger.info("🔄 Retrying...")
+                    logger.info(" Retrying...")
                     time.sleep(1)
                     continue
                 return None
             
             except requests.exceptions.ConnectionError:
-                logger.error("🔌 Connection error: Backend unreachable")
+                logger.error(" Connection error: Backend unreachable")
                 if attempt < self.retry_attempts - 1:
-                    logger.info("🔄 Retrying in 3s...")
+                    logger.info(" Retrying in 3s...")
                     time.sleep(3)
                     continue
                 return None
             
             except Exception as e:
-                logger.error(f"❌ Unexpected error: {e}")
+                logger.error(f"Unexpected error: {e}")
                 return None
         
-        logger.error(f"❌ Failed after {self.retry_attempts} attempts")
+        logger.error(f" Failed after {self.retry_attempts} attempts")
         return None
     
     # ==========================================
@@ -137,7 +135,6 @@ class BackendAPIClient:
         hostname: str,
         ip_address: Optional[str] = None,
         os: Optional[str] = None,
-        mac_address: Optional[str] = None,
         version: Optional[str] = None
     ) -> Optional[int]:
         """
@@ -153,13 +150,12 @@ class BackendAPIClient:
         Returns:
             agent_id nếu thành công, None nếu lỗi
         """
-        logger.info(f"📝 Registering agent: {hostname}")
+        logger.info(f" Registering agent: {hostname}")
         
         data = {
             'hostname': hostname,
             'ip_address': ip_address,
             'os': os,
-            'mac_address': mac_address,
             'version': version
         }
         
@@ -167,10 +163,10 @@ class BackendAPIClient:
         
         if response and 'id' in response:
             agent_id = response['id']
-            logger.info(f"✅ Agent registered successfully! ID: {agent_id}")
+            logger.info(f" Agent registered successfully! ID: {agent_id}")
             return agent_id
         else:
-            logger.error("❌ Failed to register agent")
+            logger.error(" Failed to register agent")
             return None
     
     def send_heartbeat(self, agent_id: int) -> bool:
@@ -183,18 +179,25 @@ class BackendAPIClient:
         Returns:
             True nếu thành công, False nếu lỗi
         """
-        logger.debug(f"💓 Sending heartbeat for agent {agent_id}")
+        logger.debug(f" Sending heartbeat for agent {agent_id}")
+        
+        # Backend expects body with is_online field
+        heartbeat_data = {
+            'is_online': True,
+            'version': '1.0.0'
+        }
         
         response = self._make_request(
             'POST',
-            f'/api/v1/agents/{agent_id}/heartbeat'
+            f'/api/v1/agents/{agent_id}/heartbeat',
+            data=heartbeat_data
         )
         
         if response:
-            logger.debug("✅ Heartbeat sent")
+            logger.debug(" Heartbeat sent")
             return True
         else:
-            logger.warning("❌ Failed to send heartbeat")
+            logger.warning(" Failed to send heartbeat")
             return False
     
     def get_agent_info(self, agent_id: int) -> Optional[Dict[str, Any]]:
@@ -207,15 +210,15 @@ class BackendAPIClient:
         Returns:
             Agent info hoặc None
         """
-        logger.debug(f"🔍 Fetching agent info: {agent_id}")
+        logger.debug(f" Fetching agent info: {agent_id}")
         
         response = self._make_request('GET', f'/api/v1/agents/{agent_id}')
         
         if response:
-            logger.debug("✅ Agent info fetched")
+            logger.debug("Agent info fetched")
             return response
         else:
-            logger.warning("❌ Failed to fetch agent info")
+            logger.warning(" Failed to fetch agent info")
             return None
     
     # ==========================================
@@ -232,7 +235,7 @@ class BackendAPIClient:
         Returns:
             List of rules
         """
-        logger.info(f"📋 Fetching active rules for {os_type}")
+        logger.info(f" Fetching active rules for {os_type}")
         
         response = self._make_request(
             'GET',
@@ -242,10 +245,10 @@ class BackendAPIClient:
         
         if response:
             rules_count = len(response)
-            logger.info(f"✅ Fetched {rules_count} active rules")
+            logger.info(f" Fetched {rules_count} active rules")
             return response
         else:
-            logger.warning("❌ Failed to fetch rules")
+            logger.warning(" Failed to fetch rules")
             return []
     
     # ==========================================
@@ -271,7 +274,7 @@ class BackendAPIClient:
             logger.debug("No violations to report")
             return True
         
-        logger.info(f"📤 Reporting {len(violations)} violations for agent {agent_id}")
+        logger.info(f" Reporting {len(violations)} violations for agent {agent_id}")
         
         # Convert Pydantic models sang dict
         violations_data = [v.model_dump() for v in violations]
@@ -283,10 +286,10 @@ class BackendAPIClient:
         )
         
         if response:
-            logger.info("✅ Violations reported successfully")
+            logger.info(" Violations reported successfully")
             return True
         else:
-            logger.error("❌ Failed to report violations")
+            logger.error(" Failed to report violations")
             return False
     
     def get_agent_violations(
@@ -304,7 +307,7 @@ class BackendAPIClient:
         Returns:
             List of violations
         """
-        logger.debug(f"🔍 Fetching violations for agent {agent_id}")
+        logger.debug(f" Fetching violations for agent {agent_id}")
         
         response = self._make_request(
             'GET',
@@ -313,10 +316,10 @@ class BackendAPIClient:
         )
         
         if response:
-            logger.debug(f"✅ Fetched {len(response)} violations")
+            logger.debug(f" Fetched {len(response)} violations")
             return response
         else:
-            logger.warning("❌ Failed to fetch violations")
+            logger.warning(" Failed to fetch violations")
             return []
     
     # ==========================================
@@ -330,7 +333,7 @@ class BackendAPIClient:
         Returns:
             True nếu backend OK, False nếu down
         """
-        logger.debug("🏥 Health check...")
+        logger.debug(" Health check...")
         
         try:
             response = requests.get(
@@ -339,14 +342,14 @@ class BackendAPIClient:
             )
             
             if response.status_code == 200:
-                logger.debug("✅ Backend is healthy")
+                logger.debug(" Backend is healthy")
                 return True
             else:
-                logger.warning(f"⚠️  Backend returned {response.status_code}")
+                logger.warning(f"  Backend returned {response.status_code}")
                 return False
         
         except Exception as e:
-            logger.error(f"❌ Backend is down: {e}")
+            logger.error(f" Backend is down: {e}")
             return False
 
 
@@ -361,7 +364,7 @@ if __name__ == "__main__":
     from .system_info import get_agent_info
     
     print("=" * 60)
-    print("🧪 TESTING BackendAPIClient")
+    print(" TESTING BackendAPIClient")
     print("=" * 60)
     
     # Setup logger
@@ -370,19 +373,19 @@ if __name__ == "__main__":
     # Create client
     client = BackendAPIClient(
         api_url="http://localhost:8000",
-        api_token="",  # Empty for testing
+        api_token="",  
         timeout=10,
         retry_attempts=2
     )
     
-    print("\n1️⃣  Testing health check:")
+    print("\n  Testing health check:")
     if client.health_check():
-        print("   ✅ Backend is healthy")
+        print("    Backend is healthy")
     else:
-        print("   ❌ Backend is down")
+        print("    Backend is down")
         sys.exit(1)
     
-    print("\n2️⃣  Testing agent registration:")
+    print("\n  Testing agent registration:")
     agent_data = get_agent_info()
     agent_id = client.register_agent(
         hostname=agent_data['hostname'],
@@ -393,22 +396,22 @@ if __name__ == "__main__":
     )
     
     if agent_id:
-        print(f"   ✅ Agent ID: {agent_id}")
+        print(f"    Agent ID: {agent_id}")
     else:
-        print("   ❌ Registration failed")
+        print("    Registration failed")
         sys.exit(1)
     
-    print("\n3️⃣  Testing heartbeat:")
+    print("\n  Testing heartbeat:")
     if client.send_heartbeat(agent_id):
-        print("   ✅ Heartbeat sent")
+        print("    Heartbeat sent")
     else:
-        print("   ❌ Heartbeat failed")
+        print("    Heartbeat failed")
     
-    print("\n4️⃣  Testing get active rules:")
+    print("\n  Testing get active rules:")
     rules = client.get_active_rules(os_type="ubuntu")
-    print(f"   ✅ Fetched {len(rules)} rules")
+    print(f"    Fetched {len(rules)} rules")
     
-    print("\n5️⃣  Testing report violations:")
+    print("\n  Testing report violations:")
     test_violations = [
         ViolationReport(
             agent_id=agent_id,
@@ -420,10 +423,10 @@ if __name__ == "__main__":
     ]
     
     if client.report_violations(agent_id, test_violations):
-        print("   ✅ Violations reported")
+        print("    Violations reported")
     else:
-        print("   ❌ Report failed")
+        print("    Report failed")
     
     print("\n" + "=" * 60)
-    print("✅ ALL HTTP CLIENT TESTS COMPLETED!")
+    print(" ALL HTTP CLIENT TESTS COMPLETED!")
     print("=" * 60)

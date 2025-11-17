@@ -1,5 +1,5 @@
 """User schemas for request/response validation."""
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 from typing import Optional
 from datetime import datetime
 import re
@@ -7,6 +7,7 @@ import re
 
 class UserBase(BaseModel):
     """Base user schema."""
+    model_config = ConfigDict(extra="forbid")
     username: str = Field(..., min_length=3, max_length=50)
     email: str = Field(..., min_length=3, max_length=100)  
     role: str = Field(default="viewer", pattern="^(admin|operator|viewer)$")
@@ -32,6 +33,7 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
     """Schema for updating user."""
+    model_config = ConfigDict(extra="forbid")
     username: Optional[str] = Field(None, min_length=3, max_length=50)
     email: Optional[str] = Field(None, min_length=3, max_length=100)  
     password: Optional[str] = Field(None, min_length=6, max_length=100)

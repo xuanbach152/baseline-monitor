@@ -23,6 +23,17 @@ def get_rule_by_name(db: Session, name: str) -> Optional[Rule]:
     return db.query(Rule).filter(Rule.name == name).first()
 
 
+def get_rule_by_agent_id(db: Session, agent_rule_id: str) -> Optional[Rule]:
+    """Get rule by agent_rule_id (e.g., 'UBU-01', 'WIN-03')."""
+    rule=db.query(Rule).filter(Rule.agent_rule_id == agent_rule_id).first()
+    if not rule:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Rule with agent_rule_id '{agent_rule_id}' not found"
+        )
+    return rule
+
+
 def get_rules(
     db: Session,
     skip: int = 0,

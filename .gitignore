@@ -14,6 +14,11 @@ __pycache__/
 *.db
 *.sqlite3
 
+# === Agent Runtime Files ===
+config.yaml
+config.yaml.backup
+.agent_cache.json
+
 # === IDE / System files ===
 .vscode/
 .idea/

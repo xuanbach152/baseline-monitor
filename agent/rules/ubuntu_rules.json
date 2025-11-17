@@ -1,0 +1,92 @@
+[
+  {
+    "id": "UBU-01",
+    "name": "Disable root SSH login",
+    "description": "Prevent direct root login via SSH to reduce attack surface. Root access should only be obtained through sudo after regular user login.",
+    "audit_command": "grep '^PermitRootLogin' /etc/ssh/sshd_config",
+    "expected_output": "PermitRootLogin no",
+    "severity": "high",
+    "remediation": "Edit /etc/ssh/sshd_config and set 'PermitRootLogin no', then run 'sudo systemctl restart sshd'"
+  },
+  {
+    "id": "UBU-02",
+    "name": "Ensure UFW is enabled",
+    "description": "Enable Uncomplicated Firewall (UFW) to provide host-based firewall protection and control network traffic.",
+    "audit_command": "sudo ufw status",
+    "expected_output": "Status: active",
+    "severity": "high",
+    "remediation": "Run 'sudo ufw enable' to activate the firewall"
+  },
+  {
+    "id": "UBU-03",
+    "name": "Ensure auditd service is enabled",
+    "description": "Enable audit daemon (auditd) to track security-relevant events for compliance and forensic analysis.",
+    "audit_command": "systemctl is-enabled auditd",
+    "expected_output": "enabled",
+    "severity": "medium",
+    "remediation": "Run 'sudo apt install auditd -y && sudo systemctl enable --now auditd'"
+  },
+  {
+    "id": "UBU-04",
+    "name": "Ensure automatic updates are enabled",
+    "description": "Enable unattended-upgrades to automatically install security patches and keep the system up-to-date.",
+    "audit_command": "systemctl is-enabled unattended-upgrades",
+    "expected_output": "enabled",
+    "severity": "high",
+    "remediation": "Run 'sudo apt install unattended-upgrades -y && sudo systemctl enable --now unattended-upgrades'"
+  },
+  {
+    "id": "UBU-05",
+    "name": "Set password minimum length >= 14",
+    "description": "Enforce strong password policy by requiring minimum password length of 14 characters to resist brute-force attacks.",
+    "audit_command": "grep '^PASS_MIN_LEN' /etc/login.defs",
+    "expected_output": "PASS_MIN_LEN\t14",
+    "severity": "medium",
+    "remediation": "Edit /etc/login.defs and set 'PASS_MIN_LEN 14'"
+  },
+  {
+    "id": "UBU-06",
+    "name": "Set password maximum age <= 90 days",
+    "description": "Enforce periodic password changes by setting maximum password age to 90 days or less.",
+    "audit_command": "grep '^PASS_MAX_DAYS' /etc/login.defs",
+    "expected_output": "PASS_MAX_DAYS\t90",
+    "severity": "medium",
+    "remediation": "Edit /etc/login.defs and set 'PASS_MAX_DAYS 90'"
+  },
+  {
+    "id": "UBU-07",
+    "name": "Ensure /tmp has noexec option",
+    "description": "Prevent execution of binaries in /tmp directory to mitigate malware execution from temporary files.",
+    "audit_command": "findmnt -n /tmp | grep noexec",
+    "expected_output": "noexec",
+    "severity": "high",
+    "remediation": "Add 'noexec' option to /tmp mount in /etc/fstab and run 'sudo mount -o remount /tmp'"
+  },
+  {
+    "id": "UBU-08",
+    "name": "Ensure AppArmor is enabled",
+    "description": "Enable AppArmor for mandatory access control to confine programs and limit potential damage from security breaches.",
+    "audit_command": "aa-status 2>/dev/null | grep -q 'apparmor module is loaded' && echo 'loaded' || echo 'not loaded'",
+    "expected_output": "loaded",
+    "severity": "high",
+    "remediation": "Run 'sudo systemctl enable --now apparmor' and reboot if necessary"
+  },
+  {
+    "id": "UBU-09",
+    "name": "Ensure rsyslog service is enabled",
+    "description": "Enable rsyslog service to collect, process, and forward system log messages for monitoring and troubleshooting.",
+    "audit_command": "systemctl is-enabled rsyslog",
+    "expected_output": "enabled",
+    "severity": "medium",
+    "remediation": "Run 'sudo apt install rsyslog -y && sudo systemctl enable --now rsyslog'"
+  },
+  {
+    "id": "UBU-10",
+    "name": "Disable IPv6 (if unused)",
+    "description": "Disable IPv6 protocol if not used to reduce attack surface and prevent IPv6-based attacks.",
+    "audit_command": "sysctl net.ipv6.conf.all.disable_ipv6",
+    "expected_output": "net.ipv6.conf.all.disable_ipv6 = 1",
+    "severity": "low",
+    "remediation": "Run 'sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1' and add to /etc/sysctl.conf for persistence"
+  }
+]

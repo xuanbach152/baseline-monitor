@@ -1,9 +1,3 @@
-"""
-Configuration Module
-====================
-Module đọc config YAML và validate.
-Hỗ trợ auto-registration: không cần agent_id thủ công.
-"""
 
 import os
 import socket
@@ -14,10 +8,10 @@ import yaml
 
 
 class AgentConfig:
-    """Class quản lý cấu hình agent."""
+    
     
     def __init__(self, config_path: str = "config.yaml"):
-        """Khởi tạo config."""
+        
         self.config_path = Path(config_path)
         self._config_data = {}
         self._cache_file = Path(".agent_cache.json")
@@ -27,7 +21,7 @@ class AgentConfig:
         self._load_cache()
     
     def _load_config(self):
-        """Đọc file YAML."""
+
         if not self.config_path.exists():
             raise FileNotFoundError(f"Config file not found: {self.config_path}")
         
@@ -46,18 +40,18 @@ class AgentConfig:
             if section not in self._config_data:
                 raise ValueError(f"Missing section: {section}")
         
-        # Auto-detect hostname nếu không có
+      
         if not self._config_data['agent'].get('hostname'):
             self._config_data['agent']['hostname'] = socket.gethostname()
         
-        # Validate os_type
+        
         os_type = self._config_data['agent'].get('os_type')
         if not os_type:
             raise ValueError("agent.os_type is required")
         if os_type not in ['ubuntu', 'windows']:
             raise ValueError(f"os_type must be 'ubuntu' or 'windows', got '{os_type}'")
         
-        # Validate backend
+      
         if not self._config_data['backend'].get('api_url'):
             raise ValueError("backend.api_url is required")
         
@@ -84,7 +78,7 @@ class AgentConfig:
             with open(self._cache_file, 'w') as f:
                 json.dump({'agent_id': agent_id}, f)
         except IOError as e:
-            print(f"⚠️ Warning: Could not save cache: {e}")
+            print(f" Warning: Could not save cache: {e}")
     
     # Agent properties
     @property
@@ -193,37 +187,37 @@ if __name__ == "__main__":
     import sys
     
     print("=" * 60)
-    print("🧪 TESTING AgentConfig")
+    print(" TESTING AgentConfig")
     print("=" * 60)
     
     try:
         config = AgentConfig("config.yaml")
-        print("\n✅ Config loaded successfully!")
+        print("\n Config loaded successfully!")
         
-        print("\n🤖 Agent:")
+        print("\n Agent:")
         print(f"   Hostname:   {config.hostname}")
         print(f"   Name:       {config.agent_name}")
         print(f"   OS Type:    {config.os_type}")
         print(f"   Agent ID:   {config.agent_id or 'Not registered yet'}")
         
-        print("\n🌐 Backend:")
+        print("\n Backend:")
         print(f"   API URL:    {config.api_url}")
         print(f"   Timeout:    {config.api_timeout}s")
         
-        print("\n🔍 Scanner:")
+        print("\n Scanner:")
         print(f"   Interval:   {config.scan_interval}s")
         print(f"   Rules:      {config.rules_path}")
         
-        print("\n📝 Logging:")
+        print("\n Logging:")
         print(f"   Level:      {config.log_level}")
         print(f"   File:       {config.log_file}")
         
         print("\n" + "=" * 60)
-        print("✅ ALL TESTS PASSED!")
+        print("ALL TESTS PASSED!")
         print("=" * 60)
         
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\n Error: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

@@ -54,6 +54,17 @@ def list_rules(
 # READ Operations - By ID (must be last in GET)
 # ============================================================================
 
+@router.get("/agent/{agent_rule_id}", response_model=RuleResponse)
+def get_rule_by_agent_id(agent_rule_id: str, db: Session = Depends(get_db)):
+    """
+    Get rule by agent_rule_id (e.g., 'UBU-01', 'WIN-03').
+    
+    This endpoint is used by agents to lookup rule metadata when reporting violations.
+    """
+    rule = crud.get_rule_by_agent_id(db, agent_rule_id)
+    return rule
+
+
 @router.get("/{rule_id}", response_model=RuleResponse)
 def get_rule(rule_id: int, db: Session = Depends(get_db)):
     """

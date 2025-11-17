@@ -86,7 +86,7 @@ def get_logger(name: str = "agent") -> logging.Logger:
 if __name__ == "__main__":
     """Test logger."""
     print("=" * 60)
-    print("🧪 TESTING Logger")
+    print("TESTING Logger")
     print("=" * 60)
     
     # Test với default config
@@ -96,14 +96,14 @@ if __name__ == "__main__":
         console_output=True
     )
     
-    print("\n📝 Testing log levels:\n")
+    print("\n Testing log levels:\n")
     
-    logger.debug("🐛 This is a DEBUG message")
-    logger.info("ℹ️  This is an INFO message")
-    logger.warning("⚠️  This is a WARNING message")
-    logger.error("❌ This is an ERROR message")
-    logger.critical("🔥 This is a CRITICAL message")
+    logger.debug(" This is a DEBUG message")
+    logger.info(" This is an INFO message")
+    logger.warning("This is a WARNING message")
+    logger.error("This is an ERROR message")
+    logger.critical("This is a CRITICAL message")
     
     print("\n" + "=" * 60)
-    print("✅ Check ./logs/test.log for file output")
+    print(" Check ./logs/test.log for file output")
     print("=" * 60)

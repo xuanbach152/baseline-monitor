@@ -1,11 +1,12 @@
 """Violation schemas for request/response validation."""
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
 
 
 class ViolationBase(BaseModel):
     """Base violation schema """
+    model_config = ConfigDict(extra="forbid")
     agent_id: int = Field(..., description="ID của agent bị vi phạm")
     rule_id: int = Field(..., description="ID của CIS rule bị vi phạm")
     message: str = Field(..., description="Mô tả chi tiết violation")
@@ -22,8 +23,23 @@ class ViolationCreate(ViolationBase):
     pass
 
 
+class ViolationCreateFromAgent(BaseModel):
+    """Schema for agent reporting violations (uses agent_rule_id instead of rule_id)."""
+    model_config = ConfigDict(extra="forbid")
+    agent_id: int = Field(..., description="ID của agent")
+    agent_rule_id: str = Field(..., description="Agent-side rule ID (e.g., 'UBU-01')")
+    message: str = Field(..., description="Mô tả chi tiết violation")
+    confidence_score: Optional[float] = Field(
+        default=1.0,
+        ge=0.0,
+        le=1.0,
+        description="Độ tin cậy (0.0-1.0)"
+    )
+
+
 class ViolationUpdate(BaseModel):
     """Schema for updating violation."""
+    model_config = ConfigDict(extra="forbid")
     message: Optional[str] = Field(None, description="Update mô tả violation")
     confidence_score: Optional[float] = Field(
         None,
