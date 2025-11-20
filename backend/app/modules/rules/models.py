@@ -14,6 +14,7 @@ class Rule(Base):
     description = Column(String)
     check_expression = Column(String)  # Command/script to check compliance
     severity = Column(String, default="medium")  # low, medium, high, critical
+    category = Column(String(50), nullable=True)  # Category: SSH, Firewall, Password Policy, etc.
     active = Column(Boolean, default=True)
     agent_rule_id = Column(String(20), unique=True, index=True, nullable=True)  # Agent-side rule ID (e.g., "UBU-01", "WIN-03")
     

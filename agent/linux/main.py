@@ -41,6 +41,8 @@ from agent.common import (
     BackendAPIClient,
     system_info
 )
+from agent.linux.scanner import run_scan
+from agent.linux.violation_reporter import report_violations
 
 
 class LinuxAgent:
@@ -243,6 +245,54 @@ class LinuxAgent:
             self.logger.error(f"Heartbeat error: {e}")
             return False
     
+    def run_scan_and_report(self):
+        """
+        Run compliance scan và report violations tới backend.
+        
+        Returns:
+            bool: True nếu scan thành công, False nếu lỗi
+        """
+        if not self.agent_id:
+            self.logger.warning("Cannot run scan - no agent_id")
+            return False
+        
+        try:
+            self.logger.info("=" * 60)
+            self.logger.info(" Starting compliance scan...")
+            
+            # Run scan
+            scan_result = run_scan(
+                agent_id=self.agent_id,
+                rules_path="agent/rules/ubuntu_rules.json",
+                timeout_per_rule=30
+            )
+            
+            # Log scan summary
+            self.logger.info(f"Scan completed: {scan_result.compliance_rate:.1f}% compliance")
+            self.logger.info(f"  Pass: {scan_result.pass_count}, Fail: {scan_result.fail_count}, Error: {scan_result.error_count}")
+            
+            # Report violations to backend
+            if scan_result.fail_count > 0 or scan_result.error_count > 0:
+                self.logger.info(" Reporting violations to backend...")
+                report_success = report_violations(
+                    client=self.client,
+                    scan_result=scan_result,
+                    report_pass=False  # Only report FAIL and ERROR
+                )
+                
+                if report_success:
+                    self.logger.info(" Violations reported successfully")
+                else:
+                    self.logger.warning(" Some violations failed to report")
+            else:
+                self.logger.info(" No violations to report - system is compliant!")
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Scan error: {e}", exc_info=True)
+            return False
+    
     def run(self):
         """
         Main agent loop.
@@ -284,7 +334,14 @@ class LinuxAgent:
         
         self.running = True
         heartbeat_interval = 60  # 60 seconds
+        scan_interval = self.config.scan_interval 
         last_heartbeat = 0
+        last_scan = 0
+        
+        # Run initial scan immediately
+        self.logger.info("Running initial compliance scan...")
+        self.run_scan_and_report()
+        last_scan = time.time()
         
         try:
             while self.running:
@@ -295,10 +352,10 @@ class LinuxAgent:
                     self.send_heartbeat()
                     last_heartbeat = current_time
                 
-                # TODO: Implement scan logic here
-                # if current_time - last_scan >= self.config.scan_interval:
-                #     self.run_scan()
-                #     last_scan = current_time
+                # Run scan every scan_interval seconds
+                if current_time - last_scan >= scan_interval:
+                    self.run_scan_and_report()
+                    last_scan = current_time
                 
                 # Sleep for 5 seconds before next iteration
                 time.sleep(5)

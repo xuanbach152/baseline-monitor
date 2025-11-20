@@ -127,6 +127,26 @@ class BackendAPIClient:
         return None
     
     # ==========================================
+    # HELPER METHODS
+    # ==========================================
+    
+    def get(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+        """GET request helper."""
+        return self._make_request('GET', endpoint, params=params)
+    
+    def post(self, endpoint: str, data: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+        """POST request helper."""
+        return self._make_request('POST', endpoint, data=data)
+    
+    def put(self, endpoint: str, data: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+        """PUT request helper."""
+        return self._make_request('PUT', endpoint, data=data)
+    
+    def delete(self, endpoint: str) -> Optional[Dict[str, Any]]:
+        """DELETE request helper."""
+        return self._make_request('DELETE', endpoint)
+    
+    # ==========================================
     # AGENT ENDPOINTS
     # ==========================================
     

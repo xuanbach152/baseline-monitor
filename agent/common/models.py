@@ -4,7 +4,7 @@ Data Models Module
 Pydantic models để validate dữ liệu agent.
 """
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional, List
 from enum import Enum
 from pydantic import BaseModel, Field
@@ -48,7 +48,7 @@ class ViolationReport(BaseModel):
     status: ViolationStatus = Field(..., description="PASS/FAIL/ERROR")
     details: Optional[str] = Field(None, description="Chi tiết violation")
     detected_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(UTC),
         description="Thời điểm phát hiện"
     )
     raw_output: Optional[str] = Field(None, description="Output của audit command")
@@ -99,10 +99,10 @@ class ScanResult(BaseModel):
         return (
             f"Scan Result for Agent {self.agent_id}\n"
             f"  Total Rules: {self.total_rules_checked}\n"
-            f"  ✅ Pass: {self.pass_count}\n"
-            f"  ❌ Fail: {self.fail_count}\n"
-            f"  ⚠️  Error: {self.error_count}\n"
-            f"  📊 Compliance: {self.compliance_rate:.1f}%"
+            f"   Pass: {self.pass_count}\n"
+            f"   Fail: {self.fail_count}\n"
+            f"    Error: {self.error_count}\n"
+            f"   Compliance: {self.compliance_rate:.1f}%"
         )
     
     class Config:
@@ -115,14 +115,14 @@ class AgentStatus(BaseModel):
     name: str
     os_type: str
     is_online: bool = True
-    last_heartbeat: datetime = Field(default_factory=datetime.utcnow)
+    last_heartbeat: datetime = Field(default_factory=lambda: datetime.now(UTC))
     last_scan_at: Optional[datetime] = None
     total_scans: int = 0
     current_compliance_rate: float = 0.0
     
     def update_heartbeat(self):
         """Cập nhật thời gian heartbeat."""
-        self.last_heartbeat = datetime.utcnow()
+        self.last_heartbeat = datetime.now(UTC)
         self.is_online = True
     
     def update_scan_result(self, result: ScanResult):
@@ -140,11 +140,11 @@ if __name__ == "__main__":
     import json
     
     print("=" * 60)
-    print("🧪 TESTING Models")
+    print(" TESTING Models")
     print("=" * 60)
     
     # Test 1: Rule model
-    print("\n1️⃣  Testing Rule model:")
+    print("\n  Testing Rule model:")
     rule = Rule(
         rule_id="UBU-01",
         title="SSH Root Login Disabled",
@@ -154,11 +154,11 @@ if __name__ == "__main__":
         check_expression="grep '^PermitRootLogin' /etc/ssh/sshd_config",
         is_active=True
     )
-    print(f"   ✅ Rule: {rule.rule_id} - {rule.title}")
+    print(f"   Rule: {rule.rule_id} - {rule.title}")
     print(f"   Severity: {rule.severity}")
     
     # Test 2: ViolationReport model
-    print("\n2️⃣  Testing ViolationReport model:")
+    print("\n Testing ViolationReport model:")
     violation = ViolationReport(
         agent_id=1,
         rule_id="UBU-01",
@@ -166,14 +166,14 @@ if __name__ == "__main__":
         details="PermitRootLogin is set to yes",
         raw_output="PermitRootLogin yes"
     )
-    print(f"   ✅ Violation: {violation.rule_id} - {violation.status}")
+    print(f"   Violation: {violation.rule_id} - {violation.status}")
     print(f"   Details: {violation.details}")
     
     # Test 3: ScanResult model
-    print("\n3️⃣  Testing ScanResult model:")
+    print("\n  Testing ScanResult model:")
     result = ScanResult(
         agent_id=1,
-        scan_started_at=datetime.utcnow(),
+        scan_started_at=datetime.now(UTC),
         total_rules_checked=10
     )
     
@@ -186,15 +186,15 @@ if __name__ == "__main__":
             details=f"Check {i+1}"
         ))
     
-    result.scan_completed_at = datetime.utcnow()
+    result.scan_completed_at = datetime.now(UTC)
     print(f"\n{result.summary()}")
     
     # Test 4: JSON serialization
-    print("\n4️⃣  Testing JSON serialization:")
+    print("\n  Testing JSON serialization:")
     violation_dict = violation.model_dump()
-    print(f"   ✅ Violation as dict:")
+    print(f"    Violation as dict:")
     print(f"   {json.dumps(violation_dict, indent=6, default=str)}")
     
     print("\n" + "=" * 60)
-    print("✅ ALL MODEL TESTS PASSED!")
+    print(" ALL MODEL TESTS PASSED!")
     print("=" * 60)
