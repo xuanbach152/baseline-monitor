@@ -1,0 +1,240 @@
+.rules-page {
+  padding: 20px;
+}
+
+.rules-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.stat-box.active {
+  border-color: #4fd1c5;
+  box-shadow: 0 4px 16px rgba(79, 209, 197, 0.2);
+}
+
+.stat-box.inactive {
+  border-color: #b0b3b8;
+  box-shadow: 0 4px 16px rgba(176, 179, 184, 0.2);
+}
+
+.stat-box.ubuntu {
+  border-color: #ff6b00;
+  box-shadow: 0 4px 16px rgba(255, 107, 0, 0.2);
+}
+
+.stat-box.windows {
+  border-color: #0078d4;
+  box-shadow: 0 4px 16px rgba(0, 120, 212, 0.2);
+}
+
+/* RULES GRID */
+.rules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 20px;
+}
+
+.rule-card {
+  background: linear-gradient(135deg, #1a1d23, #23272b);
+  border: 2px solid #2a2d35;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+
+.rule-card:hover {
+  border-color: #ff1744;
+  box-shadow: 0 8px 24px rgba(255, 23, 68, 0.3);
+  transform: translateY(-4px);
+}
+
+.rule-card.inactive {
+  opacity: 0.6;
+  border-color: #4a4d55;
+}
+
+.rule-card.inactive:hover {
+  opacity: 0.8;
+  border-color: #b0b3b8;
+}
+
+.rule-card-header {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #2a2d35;
+}
+
+.rule-title-section {
+  margin-bottom: 12px;
+}
+
+.rule-title-section h3 {
+  margin: 0 0 6px 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.3;
+}
+
+.rule-id {
+  font-size: 0.85rem;
+  color: #b0b3b8;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+}
+
+.rule-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.severity-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.severity-badge.large {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+}
+
+.os-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: rgba(176, 179, 184, 0.1);
+  color: #b0b3b8;
+  border: 2px solid #4a4d55;
+}
+
+.os-badge.large {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+}
+
+.category-badge {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: rgba(255, 214, 0, 0.1);
+  color: #ffd600;
+  border: 2px solid #ffd600;
+}
+
+.rule-card-body {
+  flex: 1;
+  margin-bottom: 16px;
+}
+
+.rule-category {
+  font-size: 0.9rem;
+  color: #ffd600;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.rule-description {
+  font-size: 0.95rem;
+  color: #b0b3b8;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.rule-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 2px solid #2a2d35;
+}
+
+.status-indicator {
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.status-indicator.active {
+  background: rgba(79, 209, 197, 0.2);
+  color: #4fd1c5;
+  border: 2px solid #4fd1c5;
+}
+
+.status-indicator.inactive {
+  background: rgba(176, 179, 184, 0.2);
+  color: #b0b3b8;
+  border: 2px solid #b0b3b8;
+}
+
+.btn-view-details {
+  background: transparent;
+  color: #ff1744;
+  border: none;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-view-details:hover {
+  color: #ff5252;
+  transform: translateX(4px);
+}
+
+/* MODAL */
+.rule-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.code-block {
+  background: #0d0f14;
+  border: 2px solid #2a2d35;
+  border-radius: 8px;
+  padding: 16px;
+  color: #4fd1c5;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.remediation-text {
+  color: #e8eaed;
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .rules-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filters-bar {
+    flex-direction: column;
+  }
+
+  .filter-group select,
+  .filter-group input {
+    width: 100%;
+  }
+}

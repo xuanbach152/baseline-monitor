@@ -1,0 +1,92 @@
+[
+  {
+    "id": "WIN-01",
+    "name": "Disable SMBv1 protocol",
+    "description": "Disable legacy SMBv1 vulnerable protocol to prevent security risks like WannaCry ransomware attacks.",
+    "audit_command": "Get-WindowsOptionalFeature -Online -FeatureName SMB1Protocol | Select-Object -ExpandProperty State",
+    "expected_output": "Disabled",
+    "severity": "high",
+    "remediation": "Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol -NoRestart"
+  },
+  {
+    "id": "WIN-02",
+    "name": "Ensure Windows Defender Antivirus is enabled",
+    "description": "Enable real-time protection to defend against malware, viruses, and other security threats.",
+    "audit_command": "Get-MpComputerStatus | Select-Object -ExpandProperty RealTimeProtectionEnabled",
+    "expected_output": "True",
+    "severity": "critical",
+    "remediation": "Set-MpPreference -DisableRealtimeMonitoring $false"
+  },
+  {
+    "id": "WIN-03",
+    "name": "Ensure Firewall is enabled for all profiles",
+    "description": "Protect system from unauthorized network access by enabling Windows Firewall for Domain, Private, and Public profiles.",
+    "audit_command": "Get-NetFirewallProfile -Profile Domain,Public,Private | Select-Object -ExpandProperty Enabled",
+    "expected_output": "True",
+    "severity": "high",
+    "remediation": "Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True"
+  },
+  {
+    "id": "WIN-04",
+    "name": "Set Account lockout threshold <= 5",
+    "description": "Prevent brute-force login attempts by locking accounts after a specified number of failed login attempts.",
+    "audit_command": "net accounts | Select-String 'Lockout threshold' | ForEach-Object { $_.ToString().Split(':')[1].Trim() }",
+    "expected_output": "5",
+    "severity": "medium",
+    "remediation": "net accounts /lockoutthreshold:5"
+  },
+  {
+    "id": "WIN-05",
+    "name": "Set password minimum length >= 14",
+    "description": "Enforce strong password policy by requiring minimum password length of 14 characters to resist brute-force attacks.",
+    "audit_command": "net accounts | Select-String 'Minimum password length' | ForEach-Object { $_.ToString().Split(':')[1].Trim() }",
+    "expected_output": "14",
+    "severity": "medium",
+    "remediation": "net accounts /minpwlen:14"
+  },
+  {
+    "id": "WIN-06",
+    "name": "Set password maximum age <= 90 days",
+    "description": "Require regular password changes by setting maximum password age to 90 days or less.",
+    "audit_command": "net accounts | Select-String 'Maximum password age' | ForEach-Object { $_.ToString().Split(':')[1].Trim().Split(' ')[0] }",
+    "expected_output": "90",
+    "severity": "medium",
+    "remediation": "net accounts /maxpwage:90"
+  },
+  {
+    "id": "WIN-07",
+    "name": "Enable User Account Control (UAC)",
+    "description": "Restrict silent privilege escalation by requiring user consent for administrative actions.",
+    "audit_command": "Get-ItemProperty 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System' -Name EnableLUA | Select-Object -ExpandProperty EnableLUA",
+    "expected_output": "1",
+    "severity": "high",
+    "remediation": "Set-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System' -Name EnableLUA -Value 1"
+  },
+  {
+    "id": "WIN-08",
+    "name": "Enable Audit Logon Events",
+    "description": "Record logon and logoff attempts for security monitoring and forensic analysis.",
+    "audit_command": "auditpol /get /subcategory:'Logon' | Select-String 'Success and Failure'",
+    "expected_output": "Success and Failure",
+    "severity": "medium",
+    "remediation": "auditpol /set /subcategory:'Logon' /success:enable /failure:enable"
+  },
+  {
+    "id": "WIN-09",
+    "name": "Disable Remote Desktop (if unused)",
+    "description": "Reduce remote access attack surface by disabling Remote Desktop Protocol (RDP) when not required.",
+    "audit_command": "Get-ItemProperty -Path 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server' -Name fDenyTSConnections | Select-Object -ExpandProperty fDenyTSConnections",
+    "expected_output": "1",
+    "severity": "medium",
+    "remediation": "Set-ItemProperty -Path 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server' -Name fDenyTSConnections -Value 1 -Force"
+  },
+  {
+    "id": "WIN-10",
+    "name": "Ensure Automatic Updates are enabled",
+    "description": "Keep Windows up-to-date with latest security patches by enabling Windows Update service.",
+    "audit_command": "Get-Service -Name wuauserv | Select-Object -ExpandProperty Status",
+    "expected_output": "Running",
+    "severity": "high",
+    "remediation": "Set-Service -Name wuauserv -StartupType Automatic; Start-Service -Name wuauserv"
+  }
+]

@@ -1,89 +1,48 @@
+"""seed_cis_rules_ubuntu_and_windows
+
+Revision ID: 72edc982a17e
+Revises: 5da2cbb864f0
+Create Date: 2025-12-03 16:54:04.567096
+
 """
-Script seed dữ liệu mẫu vào database.
-
-Usage:
-    python scripts/seed_data.py
-"""
-import sys
-from pathlib import Path
-
-# Add parent directory to path so we can import app
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from sqlalchemy.orm import Session
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from datetime import datetime, timedelta
-from app.core.config import settings
-from app.modules.rules.models import Rule
-from app.modules.agents.models import Agent
-
-# Import violation model to resolve relationship
-try:
-    from app.modules.violations.models import Violation
-except ImportError:
-    pass
-
-# Try to import user/auth models if they exist
-try:
-    from app.models.user import User
-    from passlib.context import CryptContext
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    HAS_AUTH = True
-except ImportError:
-    HAS_AUTH = False
-    pwd_context = None
+from typing import Sequence, Union
+from alembic import op
+import sqlalchemy as sa
+from sqlalchemy import table, column, String, Boolean, Integer
 
 
-def seed_users(db: Session):
-    """Seed multiple users với các roles khác nhau."""
-    if not HAS_AUTH:
-        print("⚠️  Auth module not available, skipping user seeding")
+# revision identifiers, used by Alembic.
+revision: str = '72edc982a17e'
+down_revision: Union[str, Sequence[str], None] = '5da2cbb864f0'
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    """Seed CIS Benchmark rules for Ubuntu and Windows."""
+    
+    # Check if rules already exist to avoid duplicate key errors
+    conn = op.get_bind()
+    result = conn.execute(sa.text("SELECT COUNT(*) FROM rules WHERE agent_rule_id LIKE 'UBU-%' OR agent_rule_id LIKE 'WIN-%'"))
+    existing_count = result.scalar()
+    
+    if existing_count > 0:
+        print(f"⚠️  Found {existing_count} existing CIS rules, skipping seeding to avoid duplicates")
         return
-        
-    print("🧑‍💼 Seeding users...")
     
-    users_data = [
-        {"username": "admin", "email": "admin@baseline.local", 
-         "password": "admin123", "role": "admin", "is_active": True},
-        {"username": "operator", "email": "operator@baseline.local", 
-         "password": "operator123", "role": "operator", "is_active": True},
-        {"username": "viewer", "email": "viewer@baseline.local", 
-         "password": "viewer123", "role": "viewer", "is_active": True},
-    ]
+    # Define rules table structure for bulk insert
+    rules_table = table(
+        'rules',
+        column('name', String),
+        column('description', String),
+        column('check_expression', String),
+        column('severity', String),
+        column('category', String),
+        column('active', Boolean),
+        column('agent_rule_id', String),
+    )
     
-    created_count = 0
-    for user_data in users_data:
-        existing = db.query(User).filter(User.username == user_data["username"]).first()
-        if not existing:
-            db.add(User(
-                username=user_data["username"],
-                email=user_data["email"],
-                hashed_password=pwd_context.hash(user_data["password"]),
-                role=user_data["role"],
-                is_active=user_data["is_active"]
-            ))
-            created_count += 1
-            print(f"  ✓ Created user: {user_data['username']} (role: {user_data['role']})")
-    
-    if created_count > 0:
-        db.commit()
-        print(f"✅ Created {created_count} new users.")
-    else:
-        print("  - All users already exist.")
-
-
-def seed_rules(db: Session):
-    """Seed CIS Benchmark rules cho Ubuntu và Windows."""
-    existing_count = db.query(Rule).count()
-    
-    if existing_count >= 20:
-        print(f"✅ Rules already exist ({existing_count} rules in database).")
-        return
-
-    print("📋 Seeding CIS Benchmark rules...")
-    
-    # Ubuntu 20.04 LTS Rules
+    # Ubuntu 20.04 LTS Rules (from agent/rules/ubuntu_rules.json)
     ubuntu_rules = [
         {
             'agent_rule_id': 'UBU-01',
@@ -177,7 +136,7 @@ def seed_rules(db: Session):
         },
     ]
     
-    # Windows 10/11 Rules
+    # Windows 10/11 Rules (from docs/selected_rules.md)
     windows_rules = [
         {
             'agent_rule_id': 'WIN-01',
@@ -271,114 +230,18 @@ def seed_rules(db: Session):
         },
     ]
     
+    # Combine all rules
     all_rules = ubuntu_rules + windows_rules
     
-    # Insert rules
-    inserted_count = 0
-    for rule_data in all_rules:
-        # Check if rule already exists
-        existing = db.query(Rule).filter(Rule.agent_rule_id == rule_data['agent_rule_id']).first()
-        if not existing:
-            rule = Rule(**rule_data)
-            db.add(rule)
-            inserted_count += 1
-            print(f"  ✓ {rule_data['agent_rule_id']}: {rule_data['name']}")
+    # Bulk insert
+    op.bulk_insert(rules_table, all_rules)
     
-    if inserted_count > 0:
-        db.commit()
-        print(f"\n✅ Seeded {inserted_count} CIS rules successfully.")
-        
-        # Summary
-        ubuntu_count = db.query(Rule).filter(Rule.agent_rule_id.like('UBU-%')).count()
-        windows_count = db.query(Rule).filter(Rule.agent_rule_id.like('WIN-%')).count()
-        total_count = db.query(Rule).count()
-        
-        print(f"\n📊 Database Summary:")
-        print(f"   Total rules: {total_count}")
-        print(f"   Ubuntu rules: {ubuntu_count}")
-        print(f"   Windows rules: {windows_count}")
-    else:
-        print("  - All rules already exist.")
+    print(f"✅ Seeded {len(ubuntu_rules)} Ubuntu rules and {len(windows_rules)} Windows rules")
 
 
-def seed_agents(db: Session):
-    """Seed sample agents."""
-    existing_count = db.query(Agent).count()
-    
-    if existing_count > 0:
-        print(f"✅ Agents already exist ({existing_count} agents in database).")
-        return
-
-    print("🖥️  Seeding sample agents...")
-    
-    agents = [
-        Agent(
-            hostname="web-server-01",
-            ip_address="192.168.1.10",
-            os="Ubuntu 22.04 LTS",
-            version="1.0.0",
-            is_online=True,
-            last_seen=datetime.now()
-        ),
-        Agent(
-            hostname="db-server-01",
-            ip_address="192.168.1.11",
-            os="Ubuntu 20.04 LTS",
-            version="1.0.0",
-            is_online=True,
-            last_seen=datetime.now() - timedelta(minutes=5)
-        ),
-        Agent(
-            hostname="win-desktop-01",
-            ip_address="192.168.1.20",
-            os="Windows 11 Pro",
-            version="1.0.0",
-            is_online=False,
-            last_seen=datetime.now() - timedelta(hours=2)
-        ),
-    ]
-    
-    db.add_all(agents)
-    db.commit()
-    print(f"✅ Seeded {len(agents)} agents successfully.")
-
-
-def main():
-    """Main entry point."""
-    # Create database session
-    engine = create_engine(settings.DATABASE_URL)
-    SessionLocal = sessionmaker(bind=engine)
-    db = SessionLocal()
-    
-    try:
-        print("\n" + "="*70)
-        print("🌱 SEEDING DATABASE WITH SAMPLE DATA")
-        print("="*70 + "\n")
-        
-        seed_users(db)
-        print()
-        seed_rules(db)
-        print()
-        seed_agents(db)
-        
-        print("\n" + "="*70)
-        print("✅ ALL SEED DATA COMPLETED SUCCESSFULLY!")
-        print("="*70)
-        
-        if HAS_AUTH:
-            print("\n📝 Default credentials:")
-            print("  Admin:    username=admin    password=admin123")
-            print("  Operator: username=operator password=operator123")
-            print("  Viewer:   username=viewer   password=viewer123")
-        
-        print()
-    except Exception as e:
-        print(f"\n❌ Error during seeding: {e}")
-        db.rollback()
-        raise
-    finally:
-        db.close()
-
-
-if __name__ == "__main__":
-    main()
+def downgrade() -> None:
+    """Remove seeded rules."""
+    # Delete all rules with agent_rule_id starting with UBU- or WIN-
+    op.execute(
+        "DELETE FROM rules WHERE agent_rule_id LIKE 'UBU-%' OR agent_rule_id LIKE 'WIN-%'"
+    )

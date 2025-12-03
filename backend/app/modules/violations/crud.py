@@ -241,11 +241,23 @@ def get_violation_stats(db: Session) -> dict:
         for agent_id, hostname, count in top_agents
     ]
     
+    # 7-day trend: count violations per day for last 7 days
+    from datetime import datetime, timedelta
+    today = datetime.utcnow().date()
+    trend = []
+    for i in range(6, -1, -1):
+        day = today - timedelta(days=i)
+        day_start = datetime.combine(day, datetime.min.time())
+        day_end = datetime.combine(day, datetime.max.time())
+        count = db.query(Violation).filter(Violation.detected_at >= day_start, Violation.detected_at <= day_end).count()
+        trend.append({"date": day.strftime("%Y-%m-%d"), "count": count})
+
     # Return comprehensive stats
     return {
         "total_violations": total_count,
         "recent_violations_24h": recent_count,
         "by_severity": severity_counts,
-        "top_5_agents": top_agents_list
+        "top_5_agents": top_agents_list,
+        "trend": trend
     }
 

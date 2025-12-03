@@ -41,7 +41,7 @@ class AgentSetup:
     def print_banner(self):
         """Print welcome banner."""
         print("\n" + "=" * 70)
-        print("🚀 BASELINE MONITOR - AGENT SETUP WIZARD")
+        print(" BASELINE MONITOR - AGENT SETUP WIZARD")
         print("=" * 70)
         print("\nThis wizard will:")
         print("  1. Auto-detect system information")
@@ -52,13 +52,13 @@ class AgentSetup:
     
     def collect_system_info(self):
         """Collect system information automatically."""
-        print("📊 STEP 1: Collecting System Information")
+        print(" STEP 1: Collecting System Information")
         print("-" * 70)
         
         try:
             self.system_info = system_info.get_agent_info(include_system_stats=True)
             
-            print(f"\n✅ System information collected:")
+            print(f"\n System information collected:")
             print(f"   • Hostname:        {self.system_info['hostname']}")
             print(f"   • IP Address:      {self.system_info['ip_address']}")
             print(f"   • OS:              {self.system_info['os']}")
@@ -79,12 +79,12 @@ class AgentSetup:
             return True
             
         except Exception as e:
-            print(f"\n❌ Error collecting system info: {e}")
+            print(f"\n Error collecting system info: {e}")
             return False
     
     def get_backend_config(self):
         """Get backend configuration from user."""
-        print("🌐 STEP 2: Backend Server Configuration")
+        print(" STEP 2: Backend Server Configuration")
         print("-" * 70)
         
         if self.interactive:
@@ -96,11 +96,11 @@ class AgentSetup:
                 backend_url = input("\n Backend URL: ").strip()
                 
                 if not backend_url:
-                    print("   ⚠️  Backend URL is required!")
+                    print("     Backend URL is required!")
                     continue
                 
                 if not (backend_url.startswith('http://') or backend_url.startswith('https://')):
-                    print("   ⚠️  URL must start with http:// or https://")
+                    print("     URL must start with http:// or https://")
                     continue
                 
                 break
@@ -129,12 +129,12 @@ class AgentSetup:
             'retry_attempts': 3
         }
         
-        print("\n✅ Backend configuration saved\n")
+        print("\n Backend configuration saved\n")
         return True
     
     def get_scanner_config(self):
         """Get scanner configuration."""
-        print("🔍 STEP 3: Scanner Configuration")
+        print(" STEP 3: Scanner Configuration")
         print("-" * 70)
         
         # Auto-detect OS type
@@ -149,7 +149,7 @@ class AgentSetup:
             os_type = 'ubuntu'  # Default
             rules_path = './agent/rules/ubuntu_rules.json'
         
-        print(f"\n✅ Auto-detected OS type: {os_type}")
+        print(f"\n Auto-detected OS type: {os_type}")
         print(f"   Rules file: {rules_path}")
         
         if self.interactive:
@@ -168,11 +168,11 @@ class AgentSetup:
                 try:
                     scan_interval = int(interval_input)
                     if scan_interval < 60:
-                        print("   ⚠️  Interval should be at least 60 seconds")
+                        print("     Interval should be at least 60 seconds")
                         continue
                     break
                 except ValueError:
-                    print("   ⚠️  Please enter a valid number")
+                    print("    Please enter a valid number")
                     continue
         else:
             scan_interval = int(os.getenv('AGENT_SCAN_INTERVAL', '3600'))
@@ -207,21 +207,21 @@ class AgentSetup:
         }
         
         print(f"   Scan interval: {scan_interval} seconds")
-        print("\n✅ Scanner configuration saved\n")
+        print("\n Scanner configuration saved\n")
         return True
     
     def generate_config_file(self):
         """Generate config.yaml file."""
-        print("💾 STEP 4: Generating Configuration File")
+        print(" STEP 4: Generating Configuration File")
         print("-" * 70)
         
         if self.config_path.exists():
             if self.interactive:
-                print(f"\n⚠️  File {self.config_path} already exists!")
+                print(f"\n  File {self.config_path} already exists!")
                 response = input("   Overwrite? (yes/no) [no]: ").strip().lower()
                 
                 if response not in ['yes', 'y']:
-                    print("\n❌ Setup cancelled. Existing config preserved.")
+                    print("\n Setup cancelled. Existing config preserved.")
                     return False
             else:
                 # Backup existing config
@@ -237,8 +237,8 @@ class AgentSetup:
                 f.write("\n")
                 yaml.dump(self.config_data, f, default_flow_style=False, sort_keys=False)
             
-            print(f"\n✅ Configuration file created: {self.config_path}")
-            print("\n📄 Configuration summary:")
+            print(f"\n Configuration file created: {self.config_path}")
+            print("\n Configuration summary:")
             print(f"   • Agent hostname:  {self.config_data['agent']['hostname']}")
             print(f"   • OS type:         {self.config_data['agent']['os_type']}")
             print(f"   • Backend URL:     {self.config_data['backend']['api_url']}")
@@ -248,12 +248,12 @@ class AgentSetup:
             return True
             
         except Exception as e:
-            print(f"\n❌ Error creating config file: {e}")
+            print(f"\n Error creating config file: {e}")
             return False
     
     def test_connection(self):
         """Test connection to backend."""
-        print("\n🔌 STEP 5: Testing Backend Connection")
+        print("\n STEP 5: Testing Backend Connection")
         print("-" * 70)
         
         try:
@@ -269,26 +269,26 @@ class AgentSetup:
             print("\n   Connecting to backend...")
             
             if client.health_check():
-                print("   ✅ Backend is reachable and healthy!")
+                print("    Backend is reachable and healthy!")
                 return True
             else:
-                print("   ⚠️  Backend is unreachable")
+                print("     Backend is unreachable")
                 print("\n   This is OK - you can start backend later.")
                 print("   Agent will auto-register when backend is available.")
                 return True
                 
         except Exception as e:
-            print(f"   ⚠️  Connection test failed: {e}")
+            print(f"     Connection test failed: {e}")
             print("\n   This is OK - you can start backend later.")
             return True
     
     def print_next_steps(self):
         """Print next steps."""
         print("\n" + "=" * 70)
-        print("🎉 SETUP COMPLETE!")
+        print(" SETUP COMPLETE!")
         print("=" * 70)
         
-        print("\n📋 Next steps:\n")
+        print("\n Next steps:\n")
         
         print("1. Start the backend server (if not running):")
         print("   cd backend")
@@ -306,7 +306,7 @@ class AgentSetup:
         print(f"   {backend_url}/api/v1/agents\n")
         
         print("=" * 70)
-        print("\n✅ Agent is ready to run!\n")
+        print("\n Agent is ready to run!\n")
     
     def run(self):
         """Run the setup wizard."""
@@ -376,10 +376,10 @@ def main():
         success = setup.run()
         sys.exit(0 if success else 1)
     except KeyboardInterrupt:
-        print("\n\n⚠️  Setup cancelled by user.")
+        print("\n\n  Setup cancelled by user.")
         sys.exit(1)
     except Exception as e:
-        print(f"\n\n❌ Setup failed: {e}")
+        print(f"\n\n Setup failed: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
