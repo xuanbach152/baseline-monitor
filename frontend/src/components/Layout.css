@@ -13,7 +13,7 @@
 
 /* SIDEBAR */
 .sidebar {
-  width: 260px;
+  width: 280px;
   background: #1a1d23;
   border-right: 2px solid #2a2d35;
   display: flex;
@@ -32,7 +32,7 @@
 }
 
 .sidebar.collapsed {
-  width: 80px;
+  width: 100px;
 }
 
 .sidebar-header {
@@ -47,11 +47,10 @@
 .light-mode .sidebar-header {
   border-bottom: 2px solid #e0e0e0;
 }
-
 .sidebar-logo {
-  font-size: 1rem;
+  font-size: 1.2rem;
   font-weight: 800;
-  color: #ff1744;
+  color: #fffdfd;
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -59,12 +58,11 @@
 }
 
 .sidebar-toggle {
-  background: #2a2d35;
+  background:#ee3b3b;
   border: none;
-  color: #fff;
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+  color: #000000;
+  height:70px;
+  width:70px;
   cursor: pointer;
   font-size: 1.2rem;
   display: flex;
@@ -74,13 +72,23 @@
 }
 
 .light-mode .sidebar-toggle {
-  background: #e0e0e0;
-  color: #1a1a1a;
+  background: #ee3b3b;
+  color: #ffffff;
+}
+
+.light-mode .sidebar-logo{
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #000000;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sidebar-toggle:hover {
-  background: #ff1744;
-  color: #fff;
+  background: #8d0202;
+  color: #faf8f8;
 }
 
 .sidebar-nav {
@@ -163,13 +171,13 @@
 /* MAIN CONTENT */
 .main-content {
   flex: 1;
-  margin-left: 260px;
+  margin-left: 280px;
   transition: margin-left 0.3s;
   min-height: 100vh;
 }
 
 .main-content.expanded {
-  margin-left: 80px;
+  margin-left: 100px;
 }
 
 .content-wrapper {

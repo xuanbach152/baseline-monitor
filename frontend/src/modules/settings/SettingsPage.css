@@ -1,7 +1,93 @@
 .settings-page {
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+  padding: 24px;
+  max-width: 100%;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.settings-page.light-mode {
+  background: #f5f6fa;
+  color: #23272b;
+}
+
+.settings-page.light-mode h1,
+.settings-page.light-mode h2 {
+  color: #23272b;
+}
+
+.settings-page.light-mode .settings-section {
+  background: #fff;
+  border-color: #e0e0e0;
+}
+
+.settings-page.light-mode .settings-section h2 {
+  border-bottom-color: #ff1744;
+}
+
+.settings-page.light-mode .setting-item label {
+  color: #23272b;
+}
+
+.settings-page.light-mode .setting-hint {
+  color: #5a5a5a;
+}
+
+.settings-page.light-mode .setting-item input[type="number"],
+.settings-page.light-mode .setting-item input[type="text"],
+.settings-page.light-mode .setting-item select {
+  background: #fff;
+  border-color: #e0e0e0;
+  color: #23272b;
+}
+
+.settings-page.light-mode .info-item {
+  background: #fff;
+  border-color: #e0e0e0;
+}
+
+.settings-page.light-mode .info-label {
+  color: #5a5a5a;
+}
+
+.settings-page.light-mode .info-value {
+  color: #23272b;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  max-width: 100%;
+}
+
+.page-header h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #ff1744, #ff5252);
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(255, 23, 68, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 23, 68, 0.5);
 }
 
 .success-message {
@@ -14,23 +100,30 @@
   font-weight: 700;
   font-size: 1.05rem;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
 .settings-section {
   background: linear-gradient(135deg, #1a1d23, #23272b);
   border: 2px solid #2a2d35;
   border-radius: 12px;
-  padding: 32px;
+  padding: 28px;
   margin-bottom: 24px;
+  max-width: 100%;
 }
 
 .settings-section h2 {
   color: #fff;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 700;
-  margin: 0 0 24px 0;
+  margin: 0 0 20px 0;
   padding-bottom: 12px;
   border-bottom: 2px solid #ff1744;
+  display: flex;
+  align-items: center;
 }
 
 .settings-grid {

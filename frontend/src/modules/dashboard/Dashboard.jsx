@@ -42,7 +42,7 @@ export default function Dashboard() {
   const { theme } = useTheme();
   const [recentViolations, setRecentViolations] = useState([]);
   const [agentList, setAgentList] = useState([]);
-  // Fetch agent list for status
+  
   useEffect(() => {
     async function fetchAgents() {
       try {
@@ -120,34 +120,27 @@ export default function Dashboard() {
           <Activity style={{ display: 'inline', marginRight: 8, color: theme === 'light' ? '#e80c26ff' : '#0cbb69ff', verticalAlign: 'middle' }} size={32} />
           Agent Monitoring Dashboard
         </h2>
-        <div style={{ display: 'flex', alignItems: 'center', marginLeft: 150, gap: 16 }}>
-          <button
-            onClick={fetchAllStats}
-            style={{
-              background: theme === 'dark' ? '#2b65dbff' : '#62e42bff',
-              color: theme === 'dark' ? '#fff' : '#23272b',
-              border: 'none',
-              borderRadius: 6,
-              padding: '7px 18px',
-              fontWeight: 700,
-              fontSize: '1.08rem',
-              cursor: 'pointer',
-              marginRight: 8,
-              boxShadow: '0 2px 6px #0002',
-              transition: 'background 0.2s',
-              textTransform: 'uppercase',
-              letterSpacing: 0.5,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8
-            }}
-            title="Reload dashboard data"
-          >
-            <RefreshCw size={16} /> Reload
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <button className="btn-primary" onClick={fetchAllStats}>
+            <RefreshCw size={16} /> Refresh
           </button>
           {lastUpdated && (
-            <span style={{ color: theme === 'light' ? '#23272b' : '#bfc7d5', fontSize: '1.02rem', fontWeight: 400 }}>
-              Last updated: {lastUpdated.toLocaleString()}
+            <span style={{ 
+              color: theme === 'light' ? '#5a5a5a' : '#bfc7d5', 
+              fontSize: '0.8rem', 
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}>
+              Last updated: {lastUpdated.toLocaleString('en-GB', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+              })}
             </span>
           )}
         </div>

@@ -1,12 +1,52 @@
 .agents-page {
-  padding: 20px;
+  padding: 24px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.agents-page.light-mode {
+  background: #f5f6fa;
+  color: #23272b;
+}
+
+.agents-page.light-mode h1,
+.agents-page.light-mode h2,
+.agents-page.light-mode h3 {
+  color: #23272b;
+}
+
+.agents-page.light-mode .agent-card,
+.agents-page.light-mode .stat-box,
+.agents-page.light-mode .modal-content {
+  background: #fff;
+  border-color: #e0e0e0;
+}
+
+.agents-page.light-mode .filter-group select,
+.agents-page.light-mode .filter-group input {
+  background: #fff;
+  border-color: #e0e0e0;
+  color: #23272b;
+}
+
+.agents-page.light-mode .info-label,
+.agents-page.light-mode .stat-label,
+.agents-page.light-mode .detail-label {
+  color: #5a5a5a;
+}
+
+.agents-page.light-mode .info-value,
+.agents-page.light-mode .stat-value,
+.agents-page.light-mode .detail-value {
+  color: #23272b;
 }
 
 .page-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   margin-bottom: 32px;
+  max-width: 1500px;
 }
 
 .page-header h1 {
@@ -27,6 +67,10 @@
   cursor: pointer;
   transition: all 0.2s;
   box-shadow: 0 4px 12px rgba(255, 23, 68, 0.3);
+  display: flex;
+  align-items: center;
+  margin-left: 700px;
+  gap: 8px;
 }
 
 .btn-primary:hover {
@@ -55,6 +99,10 @@
   padding: 48px;
   font-size: 1.2rem;
   color: #b0b3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
 }
 
 .error-message {
@@ -71,6 +119,7 @@
   gap: 16px;
   margin-bottom: 24px;
   flex-wrap: wrap;
+  max-width: 1600px;
 }
 
 .filter-group {
@@ -114,6 +163,7 @@
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
   margin-bottom: 32px;
+  max-width: 1600px;
 }
 
 .stat-box {
@@ -124,14 +174,24 @@
   text-align: center;
 }
 
+.stat-box.total {
+  border-color: #8905f5;
+  box-shadow: 0 16px 16px rgba(161, 1, 235, 0.603)
+}
+
 .stat-box.online {
   border-color: #4fd1c5;
-  box-shadow: 0 4px 16px rgba(79, 209, 197, 0.2);
+  box-shadow: 0 16px 16px rgba(1, 235, 212, 0.589);
 }
 
 .stat-box.offline {
   border-color: #ff1744;
-  box-shadow: 0 4px 16px rgba(255, 23, 68, 0.2);
+  box-shadow: 0 16px 16px rgba(241, 2, 50, 0.623);
+}
+
+.stat-box.avg {
+  border-color: #f5f105;
+  box-shadow: 0 16px 16px rgba(243, 219, 2, 0.582);
 }
 
 .stat-value {
@@ -152,8 +212,9 @@
 /* AGENTS GRID */
 .agents-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 20px;
+  max-width: 1600px;
 }
 
 .agent-card {
@@ -194,6 +255,9 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .status-badge.online {
@@ -215,6 +279,7 @@
 .agent-info {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 10px;
   font-size: 0.95rem;
 }
@@ -222,12 +287,18 @@
 .info-label {
   color: #b0b3b8;
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .info-value {
   color: #fff;
   font-weight: 500;
   text-align: right;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .agent-card-footer {
@@ -271,6 +342,10 @@
   padding: 64px;
   font-size: 1.2rem;
   color: #b0b3b8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 /* MODAL */
@@ -317,7 +392,6 @@
   background: transparent;
   border: none;
   color: #b0b3b8;
-  font-size: 2rem;
   cursor: pointer;
   width: 40px;
   height: 40px;
@@ -326,6 +400,7 @@
   justify-content: center;
   border-radius: 50%;
   transition: all 0.2s;
+  padding: 0;
 }
 
 .modal-close:hover {

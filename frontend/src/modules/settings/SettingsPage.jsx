@@ -1,7 +1,21 @@
 import React, { useState } from 'react';
+import { 
+  Settings as SettingsIcon, 
+  Save, 
+  Search, 
+  RefreshCw,
+  Bell,
+  Mail,
+  MessageSquare,
+  TrendingUp,
+  Info,
+  CheckCircle
+} from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 import './SettingsPage.css';
 
 export default function SettingsPage() {
+  const { theme } = useTheme();
   const [settings, setSettings] = useState({
     scanInterval: 3600,
     autoRefresh: true,
@@ -26,23 +40,23 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="settings-page">
+    <div className={`settings-page ${theme === 'light' ? 'light-mode' : ''}`}>
       <div className="page-header">
-        <h1>⚙️ Settings</h1>
+        <h1><SettingsIcon size={32} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 12 }} />Settings</h1>
         <button className="btn-primary" onClick={handleSave}>
-          💾 Save Settings
+          <Save size={16} /> Save Settings
         </button>
       </div>
 
       {saved && (
         <div className="success-message">
-          ✅ Settings saved successfully!
+          <CheckCircle size={20} /> Settings saved successfully!
         </div>
       )}
 
       {/* SCAN SETTINGS */}
       <div className="settings-section">
-        <h2>🔍 Scan Configuration</h2>
+        <h2><Search size={24} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }} />Scan Configuration</h2>
         <div className="settings-grid">
           <div className="setting-item">
             <label htmlFor="scanInterval">
@@ -63,7 +77,7 @@ export default function SettingsPage() {
 
       {/* DASHBOARD SETTINGS */}
       <div className="settings-section">
-        <h2>📊 Dashboard Configuration</h2>
+        <h2><RefreshCw size={24} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }} />Dashboard Configuration</h2>
         <div className="settings-grid">
           <div className="setting-item">
             <label>
@@ -97,7 +111,7 @@ export default function SettingsPage() {
 
       {/* NOTIFICATION SETTINGS */}
       <div className="settings-section">
-        <h2>🔔 Notifications</h2>
+        <h2><Bell size={24} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }} />Notifications</h2>
         <div className="settings-grid">
           <div className="setting-item">
             <label>
@@ -109,6 +123,7 @@ export default function SettingsPage() {
                   notifications: { ...settings.notifications, email: e.target.checked }
                 })}
               />
+              <Mail size={18} style={{ marginRight: 6 }} />
               Email Notifications
               <span className="setting-hint">Send email alerts for critical violations</span>
             </label>
@@ -124,6 +139,7 @@ export default function SettingsPage() {
                   notifications: { ...settings.notifications, slack: e.target.checked }
                 })}
               />
+              <MessageSquare size={18} style={{ marginRight: 6 }} />
               Slack Notifications
               <span className="setting-hint">Send Slack alerts for critical violations</span>
             </label>
@@ -133,7 +149,7 @@ export default function SettingsPage() {
 
       {/* COMPLIANCE THRESHOLDS */}
       <div className="settings-section">
-        <h2>📈 Compliance Thresholds</h2>
+        <h2><TrendingUp size={24} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }} />Compliance Thresholds</h2>
         <div className="settings-grid">
           <div className="setting-item">
             <label htmlFor="criticalThreshold">
@@ -175,7 +191,7 @@ export default function SettingsPage() {
 
       {/* SYSTEM INFO */}
       <div className="settings-section">
-        <h2>ℹ️ System Information</h2>
+        <h2><Info size={24} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }} />System Information</h2>
         <div className="info-grid">
           <div className="info-item">
             <span className="info-label">Version:</span>

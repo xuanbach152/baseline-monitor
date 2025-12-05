@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { 
+  AlertTriangle, 
+  RefreshCw, 
+  Shield, 
+  CheckCircle, 
+  Clock,
+  Activity,
+  XCircle
+} from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 import './ViolationsPage.css';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -10,6 +20,7 @@ export default function ViolationsPage() {
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { theme } = useTheme();
 
   // Filters
   const [filterSeverity, setFilterSeverity] = useState('all');
@@ -58,11 +69,12 @@ export default function ViolationsPage() {
 
   const getSeverityIcon = (severity) => {
     const sev = (severity || '').toLowerCase();
-    if (sev === 'critical') return '🔴';
-    if (sev === 'high') return '🟠';
-    if (sev === 'medium') return '🟡';
-    if (sev === 'low') return '🟢';
-    return '⚪';
+    const iconProps = { size: 14, style: { display: 'inline', verticalAlign: 'middle' } };
+    if (sev === 'critical') return <XCircle {...iconProps} />;
+    if (sev === 'high') return <AlertTriangle {...iconProps} />;
+    if (sev === 'medium') return <Clock {...iconProps} />;
+    if (sev === 'low') return <Shield {...iconProps} />;
+    return <Activity {...iconProps} />;
   };
 
   // Filter violations
@@ -131,20 +143,22 @@ export default function ViolationsPage() {
 
   if (loading) {
     return (
-      <div className="violations-page">
-        <h1>⚠️ Violations</h1>
-        <div className="loading">Loading violations...</div>
+      <div className={`violations-page ${theme === 'light' ? 'light-mode' : ''}`}>
+        <div className="page-header">
+          <h1><AlertTriangle size={32} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 12 }} />Violations</h1>
+        </div>
+        <div className="loading"><Activity size={24} /> Loading violations...</div>
       </div>
     );
   }
 
   return (
-    <div className="violations-page">
+    <div className={`violations-page ${theme === 'light' ? 'light-mode' : ''}`}>
       {/* HEADER */}
       <div className="page-header">
-        <h1>⚠️ Violations</h1>
+        <h1><AlertTriangle size={32} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 12 }} />Violations</h1>
         <button className="btn-primary" onClick={fetchData}>
-          🔄 Refresh
+          <RefreshCw size={16} /> Refresh
         </button>
       </div>
 
@@ -252,7 +266,8 @@ export default function ViolationsPage() {
             {paginatedViolations.length === 0 ? (
               <tr>
                 <td colSpan={6} className="empty-state">
-                  😔 No violations found matching your criteria
+                  <AlertTriangle size={24} style={{ opacity: 0.3, marginRight: 8 }} />
+                  No violations found matching your criteria
                 </td>
               </tr>
             ) : (
@@ -291,9 +306,9 @@ export default function ViolationsPage() {
                     </td>
                     <td className="status-cell">
                       {violation.resolved_at ? (
-                        <span className="status-badge resolved">✅ Resolved</span>
+                        <span className="status-badge resolved"><CheckCircle size={14} /> Resolved</span>
                       ) : (
-                        <span className="status-badge unresolved">⏳ Open</span>
+                        <span className="status-badge unresolved"><Clock size={14} /> Open</span>
                       )}
                     </td>
                   </tr>

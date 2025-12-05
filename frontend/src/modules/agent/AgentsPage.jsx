@@ -1,5 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { 
+  Monitor, 
+  RefreshCw, 
+  Server, 
+  Laptop, 
+  Clock, 
+  Wifi, 
+  WifiOff,
+  X,
+  FileText,
+  Activity,
+  HardDrive
+} from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 import './AgentsPage.css';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -12,6 +26,7 @@ export default function AgentsPage() {
   const [filterOS, setFilterOS] = useState('all'); // all, ubuntu, windows
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAgent, setSelectedAgent] = useState(null);
+  const { theme } = useTheme();
 
   useEffect(() => {
     fetchAgents();
@@ -67,26 +82,28 @@ export default function AgentsPage() {
 
   const getStatusBadge = (isOnline) => (
     <span className={`status-badge ${isOnline ? 'online' : 'offline'}`}>
-      {isOnline ? '🟢 Online' : '🔴 Offline'}
+      {isOnline ? <><Wifi size={14} /> Online</> : <><WifiOff size={14} /> Offline</>}
     </span>
   );
 
   if (loading) {
     return (
-      <div className="agents-page">
-        <h1>🖥️ Agents</h1>
-        <div className="loading">Loading agents...</div>
+      <div className={`agents-page ${theme === 'light' ? 'light-mode' : ''}`}>
+        <div className="page-header">
+          <h1><Monitor size={32} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 12 }} />Agents</h1>
+        </div>
+        <div className="loading"><Activity size={24} /> Loading agents...</div>
       </div>
     );
   }
 
   return (
-    <div className="agents-page">
+    <div className={`agents-page ${theme === 'light' ? 'light-mode' : ''}`}>
       {/* HEADER */}
       <div className="page-header">
-        <h1>🖥️ Agents Management</h1>
+        <h1><Monitor size={32} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 12 }} />Agents Management</h1>
         <button className="btn-primary" onClick={fetchAgents}>
-          🔄 Refresh
+          <RefreshCw size={16} /> Refresh
         </button>
       </div>
 
@@ -125,7 +142,7 @@ export default function AgentsPage() {
 
       {/* STATS SUMMARY */}
       <div className="agents-stats">
-        <div className="stat-box">
+        <div className="stat-box total">
           <div className="stat-value">{agents.length}</div>
           <div className="stat-label">Total Agents</div>
         </div>
@@ -137,7 +154,7 @@ export default function AgentsPage() {
           <div className="stat-value">{agents.filter(a => !a.is_online).length}</div>
           <div className="stat-label">Offline</div>
         </div>
-        <div className="stat-box">
+        <div className="stat-box avg">
           <div className="stat-value">
             {agents.length > 0
               ? ((agents.reduce((sum, a) => sum + (a.compliance_rate || 0), 0) / agents.length).toFixed(1))
@@ -151,7 +168,8 @@ export default function AgentsPage() {
       <div className="agents-grid">
         {filteredAgents.length === 0 ? (
           <div className="empty-state">
-            <p>😔 No agents found matching your criteria</p>
+            <Monitor size={48} style={{ opacity: 0.3, marginBottom: 16 }} />
+            <p>No agents found matching your criteria</p>
           </div>
         ) : (
           filteredAgents.map((agent) => (
@@ -167,9 +185,9 @@ export default function AgentsPage() {
 
               <div className="agent-card-body">
                 <div className="agent-info">
-                  <span className="info-label">OS:</span>
+                  <span className="info-label"><HardDrive size={14} /> OS:</span>
                   <span className="info-value">
-                    {agent.os_type === 'ubuntu' ? '🐧 Ubuntu' : '🪟 Windows'} {agent.os_version || ''}
+                    {agent.os_type === 'ubuntu' ? <><Server size={14} /> Ubuntu</> : <><Laptop size={14} /> Windows</>} {agent.os_version || ''}
                   </span>
                 </div>
 
@@ -179,7 +197,7 @@ export default function AgentsPage() {
                 </div>
 
                 <div className="agent-info">
-                  <span className="info-label">Last Seen:</span>
+                  <span className="info-label"><Clock size={14} /> Last Seen:</span>
                   <span className="info-value">
                     {agent.last_heartbeat
                       ? new Date(agent.last_heartbeat).toLocaleString()
@@ -188,7 +206,7 @@ export default function AgentsPage() {
                 </div>
 
                 <div className="agent-info">
-                  <span className="info-label">Last Scan:</span>
+                  <span className="info-label"><Activity size={14} /> Last Scan:</span>
                   <span className="info-value">
                     {agent.last_scan_at
                       ? new Date(agent.last_scan_at).toLocaleString()
@@ -223,9 +241,9 @@ export default function AgentsPage() {
         <div className="modal-overlay" onClick={() => setSelectedAgent(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>📋 Agent Details: {selectedAgent.hostname}</h2>
+              <h2><FileText size={24} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }} />Agent Details: {selectedAgent.hostname}</h2>
               <button className="modal-close" onClick={() => setSelectedAgent(null)}>
-                ✕
+                <X size={24} />
               </button>
             </div>
 

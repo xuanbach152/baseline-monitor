@@ -75,13 +75,7 @@ def seed_users(db: Session):
 
 def seed_rules(db: Session):
     """Seed CIS Benchmark rules cho Ubuntu và Windows."""
-    existing_count = db.query(Rule).count()
-    
-    if existing_count >= 20:
-        print(f"✅ Rules already exist ({existing_count} rules in database).")
-        return
-
-    print("📋 Seeding CIS Benchmark rules...")
+    print(" Seeding CIS Benchmark rules...")
     
     # Ubuntu 20.04 LTS Rules
     ubuntu_rules = [
@@ -273,8 +267,9 @@ def seed_rules(db: Session):
     
     all_rules = ubuntu_rules + windows_rules
     
-    # Insert rules
+    # Insert or update rules
     inserted_count = 0
+    updated_count = 0
     for rule_data in all_rules:
         # Check if rule already exists
         existing = db.query(Rule).filter(Rule.agent_rule_id == rule_data['agent_rule_id']).first()
@@ -282,11 +277,25 @@ def seed_rules(db: Session):
             rule = Rule(**rule_data)
             db.add(rule)
             inserted_count += 1
-            print(f"  ✓ {rule_data['agent_rule_id']}: {rule_data['name']}")
+            print(f"  ✓ Created {rule_data['agent_rule_id']}: {rule_data['name']}")
+        else:
+            # Update existing rule if check_expression is missing
+            if not existing.check_expression:
+                existing.check_expression = rule_data['check_expression']
+                existing.name = rule_data['name']
+                existing.description = rule_data['description']
+                existing.severity = rule_data['severity']
+                existing.category = rule_data['category']
+                existing.active = rule_data['active']
+                updated_count += 1
+                print(f"  ↻ Updated {rule_data['agent_rule_id']}: {rule_data['name']}")
     
-    if inserted_count > 0:
+    if inserted_count > 0 or updated_count > 0:
         db.commit()
-        print(f"\n✅ Seeded {inserted_count} CIS rules successfully.")
+        if inserted_count > 0:
+            print(f"\n✅ Inserted {inserted_count} new rules.")
+        if updated_count > 0:
+            print(f"✅ Updated {updated_count} existing rules.")
         
         # Summary
         ubuntu_count = db.query(Rule).filter(Rule.agent_rule_id.like('UBU-%')).count()
@@ -298,7 +307,7 @@ def seed_rules(db: Session):
         print(f"   Ubuntu rules: {ubuntu_count}")
         print(f"   Windows rules: {windows_count}")
     else:
-        print("  - All rules already exist.")
+        print("  - All rules are up to date.")
 
 
 def seed_agents(db: Session):

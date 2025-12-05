@@ -1,15 +1,8 @@
 #!/usr/bin/env python3
 """
 Shell Executor Module
-=====================
-Module để execute shell commands cho audit rules.
 
-Usage:
-    from agent.linux.shell_executor import execute_command
-    
-    exit_code, stdout, stderr = execute_command("grep '^PermitRootLogin' /etc/ssh/sshd_config")
-    if exit_code == 0:
-        print(f"Success: {stdout}")
+Module để execute shell commands cho audit rules.
 """
 
 import subprocess
@@ -31,45 +24,25 @@ def execute_command(
     timeout: int = 30,
     shell: bool = True
 ) -> Tuple[int, str, str]:
-    """
-    Execute shell command và return kết quả.
     
-    Args:
-        cmd: Shell command để execute (ví dụ: "grep '^PermitRootLogin' /etc/ssh/sshd_config")
-        timeout: Timeout in seconds (default: 30s)
-        shell: Có dùng shell=True không (default: True)
-    
-    Returns:
-        Tuple[int, str, str]: (exit_code, stdout, stderr)
-            - exit_code: 0 = success, non-zero = error
-            - stdout: Standard output (stripped)
-            - stderr: Standard error (stripped)
-    
-    Example:
-        >>> exit_code, stdout, stderr = execute_command("echo 'hello'")
-        >>> print(f"Exit code: {exit_code}")
-        Exit code: 0
-        >>> print(f"Output: {stdout}")
-        Output: hello
-    """
     logger.debug(f"Executing command: {cmd}")
     
     try:
-        # Execute command with timeout
+        
         result = subprocess.run(
             cmd,
             shell=shell,
             capture_output=True,
             text=True,
             timeout=timeout,
-            check=False  # Don't raise exception on non-zero exit code
+            check=False  
         )
         
         exit_code = result.returncode
         stdout = result.stdout.strip()
         stderr = result.stderr.strip()
         
-        # Log result
+        
         if exit_code == 0:
             logger.debug(f"   Command succeeded (exit code: {exit_code})")
             if stdout:
@@ -97,22 +70,7 @@ def execute_command_with_sudo(
     cmd: str,
     timeout: int = 30
 ) -> Tuple[int, str, str]:
-    """
-    Execute command with sudo prefix.
     
-    Automatically prepend 'sudo' to command if not already present.
-    
-    Args:
-        cmd: Shell command to execute
-        timeout: Timeout in seconds (default: 30s)
-    
-    Returns:
-        Tuple[int, str, str]: (exit_code, stdout, stderr)
-    
-    Example:
-        >>> exit_code, stdout, stderr = execute_command_with_sudo("ufw status")
-        >>> # Actually runs: "sudo ufw status"
-    """
     if not cmd.strip().startswith('sudo'):
         cmd = f"sudo {cmd}"
     
@@ -120,19 +78,7 @@ def execute_command_with_sudo(
 
 
 def check_command_available(command: str) -> bool:
-    """
-    Check if a command is available in PATH.
     
-    Args:
-        command: Command name to check (e.g., "ufw", "grep", "systemctl")
-    
-    Returns:
-        bool: True if command exists, False otherwise
-    
-    Example:
-        >>> if check_command_available("ufw"):
-        ...     print("UFW is installed")
-    """
     exit_code, _, _ = execute_command(
         f"command -v {command}",
         timeout=5
@@ -141,7 +87,7 @@ def check_command_available(command: str) -> bool:
 
 
 def test_shell_executor():
-    """Test shell executor với các commands cơ bản."""
+
     print("=" * 60)
     print(" TESTING Shell Executor")
     print("=" * 60)
@@ -199,8 +145,7 @@ def test_shell_executor():
             print(f"Stdout: {stdout[:200]}{'...' if len(stdout) > 200 else ''}")
         if stderr:
             print(f"Stderr: {stderr[:200]}{'...' if len(stderr) > 200 else ''}")
-    
-    # Test command availability check
+ 
     print(f"\n{'='*60}")
     print("Testing command availability check...")
     print("-" * 60)
@@ -211,7 +156,7 @@ def test_shell_executor():
         status = " Available" if available else " Not available"
         print(f"  {cmd:<20} : {status}")
     
-    # Summary
+    
     print(f"\n{'='*60}")
     print(" TEST SUMMARY")
     print("=" * 60)

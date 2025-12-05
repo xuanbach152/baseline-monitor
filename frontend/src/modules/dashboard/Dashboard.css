@@ -123,7 +123,26 @@ body {
   letter-spacing: 0.5px;
   text-shadow: 0 2px 2px #000a;
 }
+.btn-primary {
+  background: linear-gradient(135deg, #ff1744, #ff5252);
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(255, 23, 68, 0.3);
+  display: flex;
+  align-items: center;
+  margin-left: 300px;
+}
 
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 23, 68, 0.5);
+}
 .stat-grid {
   display: flex;
   flex-direction: row;

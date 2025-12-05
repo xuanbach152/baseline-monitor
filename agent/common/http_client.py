@@ -7,11 +7,9 @@ import requests
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 import logging
-
 from .models import ViolationReport, ScanResult
 
 logger = logging.getLogger("agent")
-
 
 class BackendAPIClient:
     """Client để giao tiếp với backend API."""
@@ -23,26 +21,18 @@ class BackendAPIClient:
         timeout: int = 30,
         retry_attempts: int = 3
     ):
-        """
-        Khởi tạo API client.
-        
-        Args:
-            api_url: Backend API URL (vd: "http://localhost:8000")
-            api_token: JWT token để authentication
-            timeout: Request timeout (seconds)
-            retry_attempts: Số lần retry khi request fail
-        """
+       
         self.api_url = api_url.rstrip('/')
         self.api_token = api_token
         self.timeout = timeout
         self.retry_attempts = retry_attempts
         
-        # Headers mặc định
         self.headers = {
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {api_token}' if api_token else ''
         }
     
+
     def _make_request(
         self,
         method: str,
@@ -50,18 +40,7 @@ class BackendAPIClient:
         data: Optional[Dict[str, Any]] = None,
         params: Optional[Dict[str, Any]] = None
     ) -> Optional[Dict[str, Any]]:
-        """
-        Gửi HTTP request với retry logic.
         
-        Args:
-            method: HTTP method (GET, POST, PUT, DELETE)
-            endpoint: API endpoint (vd: "/agents/register")
-            data: Request body (JSON)
-            params: Query parameters
-            
-        Returns:
-            Response JSON hoặc None nếu lỗi
-        """
         url = f"{self.api_url}{endpoint}"
         
         for attempt in range(self.retry_attempts):
@@ -77,7 +56,7 @@ class BackendAPIClient:
                     timeout=self.timeout
                 )
                 
-                # Check status code
+                
                 if response.status_code == 200 or response.status_code == 201:
                     logger.debug(f" Success: {response.status_code}")
                     return response.json()
@@ -93,10 +72,10 @@ class BackendAPIClient:
                 else:
                     logger.warning(f"  Status {response.status_code}: {response.text}")
                     
-                    # Retry nếu là lỗi server (5xx)
+                    
                     if response.status_code >= 500:
                         if attempt < self.retry_attempts - 1:
-                            wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
+                            wait_time = 2 ** attempt  
                             logger.info(f" Retrying in {wait_time}s...")
                             time.sleep(wait_time)
                             continue
@@ -126,10 +105,6 @@ class BackendAPIClient:
         logger.error(f" Failed after {self.retry_attempts} attempts")
         return None
     
-    # ==========================================
-    # HELPER METHODS
-    # ==========================================
-    
     def get(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
         """GET request helper."""
         return self._make_request('GET', endpoint, params=params)
@@ -146,10 +121,7 @@ class BackendAPIClient:
         """DELETE request helper."""
         return self._make_request('DELETE', endpoint)
     
-    # ==========================================
-    # AGENT ENDPOINTS
-    # ==========================================
-    
+
     def register_agent(
         self,
         hostname: str,
@@ -157,19 +129,7 @@ class BackendAPIClient:
         os: Optional[str] = None,
         version: Optional[str] = None
     ) -> Optional[int]:
-        """
-        Đăng ký agent với backend.
         
-        Args:
-            hostname: Hostname của máy (required)
-            ip_address: IP address
-            os: OS info
-            mac_address: MAC address
-            version: Agent version
-            
-        Returns:
-            agent_id nếu thành công, None nếu lỗi
-        """
         logger.info(f" Registering agent: {hostname}")
         
         data = {
@@ -189,19 +149,11 @@ class BackendAPIClient:
             logger.error(" Failed to register agent")
             return None
     
+
     def send_heartbeat(self, agent_id: int) -> bool:
-        """
-        Gửi heartbeat để báo agent còn hoạt động.
-        
-        Args:
-            agent_id: ID của agent
-            
-        Returns:
-            True nếu thành công, False nếu lỗi
-        """
+       
         logger.debug(f" Sending heartbeat for agent {agent_id}")
         
-        # Backend expects body with is_online field
         heartbeat_data = {
             'is_online': True,
             'version': '1.0.0'
@@ -220,16 +172,9 @@ class BackendAPIClient:
             logger.warning(" Failed to send heartbeat")
             return False
     
+
     def get_agent_info(self, agent_id: int) -> Optional[Dict[str, Any]]:
-        """
-        Lấy thông tin agent từ backend.
         
-        Args:
-            agent_id: ID của agent
-            
-        Returns:
-            Agent info hoặc None
-        """
         logger.debug(f" Fetching agent info: {agent_id}")
         
         response = self._make_request('GET', f'/api/v1/agents/{agent_id}')
@@ -241,20 +186,9 @@ class BackendAPIClient:
             logger.warning(" Failed to fetch agent info")
             return None
     
-    # ==========================================
-    # RULES ENDPOINTS
-    # ==========================================
-    
+
     def get_active_rules(self, os_type: str) -> List[Dict[str, Any]]:
-        """
-        Lấy danh sách rules active từ backend.
         
-        Args:
-            os_type: OS type (ubuntu hoặc windows)
-            
-        Returns:
-            List of rules
-        """
         logger.info(f" Fetching active rules for {os_type}")
         
         response = self._make_request(
@@ -271,25 +205,13 @@ class BackendAPIClient:
             logger.warning(" Failed to fetch rules")
             return []
     
-    # ==========================================
-    # VIOLATIONS ENDPOINTS
-    # ==========================================
-    
+
     def report_violations(
         self,
         agent_id: int,
         violations: List[ViolationReport]
     ) -> bool:
-        """
-        Gửi violations lên backend.
         
-        Args:
-            agent_id: ID của agent
-            violations: List of ViolationReport
-            
-        Returns:
-            True nếu thành công, False nếu lỗi
-        """
         if not violations:
             logger.debug("No violations to report")
             return True
@@ -312,21 +234,13 @@ class BackendAPIClient:
             logger.error(" Failed to report violations")
             return False
     
+
     def get_agent_violations(
         self,
         agent_id: int,
         limit: int = 100
     ) -> List[Dict[str, Any]]:
-        """
-        Lấy danh sách violations của agent.
-        
-        Args:
-            agent_id: ID của agent
-            limit: Số lượng tối đa
-            
-        Returns:
-            List of violations
-        """
+       
         logger.debug(f" Fetching violations for agent {agent_id}")
         
         response = self._make_request(
@@ -342,17 +256,9 @@ class BackendAPIClient:
             logger.warning(" Failed to fetch violations")
             return []
     
-    # ==========================================
-    # HEALTH CHECK
-    # ==========================================
-    
+
     def health_check(self) -> bool:
-        """
-        Kiểm tra backend có hoạt động không.
         
-        Returns:
-            True nếu backend OK, False nếu down
-        """
         logger.debug(" Health check...")
         
         try:
@@ -373,10 +279,6 @@ class BackendAPIClient:
             return False
 
 
-# ==========================================
-# TESTING CODE
-# ==========================================
-
 if __name__ == "__main__":
     """Test HTTP client."""
     import sys
@@ -387,10 +289,8 @@ if __name__ == "__main__":
     print(" TESTING BackendAPIClient")
     print("=" * 60)
     
-    # Setup logger
     setup_logger(log_level="DEBUG", console_output=True)
     
-    # Create client
     client = BackendAPIClient(
         api_url="http://localhost:8000",
         api_token="",  

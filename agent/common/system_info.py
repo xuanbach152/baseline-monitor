@@ -19,69 +19,24 @@ from typing import Dict, Optional
 
 
 def get_hostname() -> str:
-    """
-    Lấy hostname của máy.
-    
-    Returns:
-        str: Hostname (vd: "web-server-01")
-    
-    Example:
-        >>> get_hostname()
-        'ubuntu-desktop'
-    """
+   
     return socket.gethostname()
 
 
 def get_local_ip() -> str:
-    """
-    Lấy IP address local của máy (trong mạng LAN).
     
-    Returns:
-        str: IP address (vd: "192.168.1.10")
-    
-    Giải thích:
-        - Tạo UDP socket
-        - Connect tới external IP (không thực sự gửi data)
-        - Lấy IP address của socket
-        - Đây là IP mà máy dùng để ra internet
-    
-    Example:
-        >>> get_local_ip()
-        '192.168.1.10'
-    """
     try:
-        # Tạo UDP socket
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        
-        # Connect tới Google DNS (8.8.8.8)
-        # Không thực sự gửi data, chỉ để OS chọn interface
         s.connect(('8.8.8.8', 80))
-        
-        # Lấy IP của socket
         local_ip = s.getsockname()[0]
-        
         s.close()
         return local_ip
     except Exception:
-        # Fallback nếu lỗi
         return '127.0.0.1'
 
 
 def get_public_ip() -> Optional[str]:
-    """
-    Lấy IP address public (IP ra internet).
     
-    Returns:
-        Optional[str]: Public IP hoặc None nếu không lấy được
-    
-    Giải thích:
-        - Gọi API external để lấy IP public
-        - Dùng khi cần biết IP thực của máy từ bên ngoài
-    
-    Example:
-        >>> get_public_ip()
-        '42.118.234.123'
-    """
     try:
         import urllib.request
         
@@ -91,50 +46,35 @@ def get_public_ip() -> Optional[str]:
         
         return public_ip
     except Exception:
-        # Không lấy được (không có internet hoặc timeout)
         return None
 
 
 def get_os_info() -> str:
-    """
-    Lấy thông tin hệ điều hành.
     
-    Returns:
-        str: OS info (vd: "Ubuntu 22.04.3 LTS", "Windows 11 Pro")
-    
-    Giải thích:
-        - platform.system(): Linux, Windows, Darwin (macOS)
-        - platform.release(): Kernel version hoặc Windows version
-        - platform.version(): Chi tiết version
-    
-    Example:
-        >>> get_os_info()
-        'Linux 5.15.0-91-generic #101-Ubuntu SMP'
-    """
     system = platform.system()
     
     if system == "Linux":
-        # Linux: Đọc /etc/os-release để lấy distro name
+        
         try:
             with open('/etc/os-release', 'r') as f:
                 lines = f.readlines()
                 for line in lines:
                     if line.startswith('PRETTY_NAME'):
-                        # PRETTY_NAME="Ubuntu 22.04.3 LTS"
+                        
                         distro = line.split('=')[1].strip().strip('"')
                         return distro
         except FileNotFoundError:
             pass
         
-        # Fallback
+        
         return f"Linux {platform.release()}"
     
     elif system == "Windows":
-        # Windows: Dùng platform.platform()
+        
         return platform.platform()
     
     elif system == "Darwin":
-        # macOS
+    
         return f"macOS {platform.mac_ver()[0]}"
     
     else:
@@ -143,41 +83,14 @@ def get_os_info() -> str:
 
 
 def get_mac_address() -> str:
-    """
-    Lấy MAC address của interface chính.
     
-    Returns:
-        str: MAC address (vd: "aa:bb:cc:dd:ee:ff")
-    
-    Giải thích:
-        - uuid.getnode(): Lấy MAC address dạng số
-        - Convert sang format aa:bb:cc:dd:ee:ff
-    
-    Example:
-        >>> get_mac_address()
-        'a1:b2:c3:d4:e5:f6'
-    """
     mac_num = uuid.getnode()
     mac_hex = ':'.join(('%012x' % mac_num)[i:i+2] for i in range(0, 12, 2))
     return mac_hex
 
 
 def get_cpu_info() -> Dict[str, any]:
-    """
-    Lấy thông tin CPU.
     
-    Returns:
-        Dict: CPU info (cores, threads, usage, frequency)
-    
-    Example:
-        >>> get_cpu_info()
-        {
-            'physical_cores': 4,
-            'logical_cores': 8,
-            'cpu_percent': 25.5,
-            'frequency_mhz': 2400
-        }
-    """
     try:
         return {
             'physical_cores': psutil.cpu_count(logical=False),
@@ -190,20 +103,7 @@ def get_cpu_info() -> Dict[str, any]:
 
 
 def get_memory_info() -> Dict[str, any]:
-    """
-    Lấy thông tin RAM.
     
-    Returns:
-        Dict: Memory info (total, available, percent)
-    
-    Example:
-        >>> get_memory_info()
-        {
-            'total_gb': 16.0,
-            'available_gb': 8.5,
-            'used_percent': 46.9
-        }
-    """
     try:
         mem = psutil.virtual_memory()
         return {
@@ -216,21 +116,7 @@ def get_memory_info() -> Dict[str, any]:
 
 
 def get_disk_info() -> Dict[str, any]:
-    """
-    Lấy thông tin Disk.
     
-    Returns:
-        Dict: Disk info (total, used, free, percent)
-    
-    Example:
-        >>> get_disk_info()
-        {
-            'total_gb': 500.0,
-            'used_gb': 250.0,
-            'free_gb': 250.0,
-            'used_percent': 50.0
-        }
-    """
     try:
         disk = psutil.disk_usage('/')
         return {
@@ -244,32 +130,7 @@ def get_disk_info() -> Dict[str, any]:
 
 
 def get_agent_info(include_system_stats: bool = False) -> Dict[str, any]:
-    """
-    Thu thập TẤT CẢ thông tin để đăng ký agent.
     
-    Args:
-        include_system_stats: Có include CPU/RAM/Disk stats không
-    
-    Returns:
-        Dict: Đầy đủ thông tin agent
-    
-    Giải thích:
-        - Gọi tất cả các hàm trên
-        - Tổng hợp thành 1 dict
-        - Dùng để gửi lên backend khi đăng ký
-    
-    Example:
-        >>> info = get_agent_info()
-        >>> print(info)
-        {
-            'hostname': 'web-server-01',
-            'ip_address': '192.168.1.10',
-            'public_ip': '42.118.234.123',
-            'os': 'Ubuntu 22.04.3 LTS',
-            'mac_address': 'aa:bb:cc:dd:ee:ff',
-            'version': '1.0.0'
-        }
-    """
     info = {
         'hostname': get_hostname(),
         'ip_address': get_local_ip(),
@@ -292,12 +153,8 @@ def get_agent_info(include_system_stats: bool = False) -> Dict[str, any]:
     return info
 
 
-# ==========================================
-# TESTING CODE
-# ==========================================
-
 if __name__ == "__main__":
-    """Test system info module."""
+    
     print("=" * 60)
     print("SYSTEM INFORMATION")
     print("=" * 60)

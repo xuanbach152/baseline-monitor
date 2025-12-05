@@ -7,9 +7,6 @@ import {
   AlertTriangle, 
   FileText, 
   Settings, 
-  Shield,
-  ChevronLeft,
-  ChevronRight,
   Sun,
   Moon
 } from 'lucide-react';
@@ -36,17 +33,15 @@ export default function Layout({ children }) {
       {/* SIDEBAR */}
       <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-header">
-          <h1 className="sidebar-logo">
-            <Shield size={16} />
-            {!sidebarCollapsed && <span>Baseline Monitor</span>}
-          </h1>
          <button
             className="sidebar-toggle"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             title={sidebarCollapsed ? 'Expand' : 'Collapse'}
-            >
-            <Home size={20} color="#ff1744" strokeWidth={2.5} />
+            > {theme === 'dark' ? <Home size={50} color="#050505ff" strokeWidth={2.5}/> : <Home size={50} color="#f3f1f1ff" strokeWidth={2.5} />}
          </button>
+          <h1 className="sidebar-logo">
+            {!sidebarCollapsed && <span>Baseline Monitor</span>}
+          </h1>
         </div>
 
         <nav className="sidebar-nav">

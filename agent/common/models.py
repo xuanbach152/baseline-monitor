@@ -11,14 +11,14 @@ from pydantic import BaseModel, Field
 
 
 class ViolationStatus(str, Enum):
-    """Status của một violation."""
+    
     PASS = "PASS"
     FAIL = "FAIL"
     ERROR = "ERROR"
 
 
 class RuleSeverity(str, Enum):
-    """Mức độ nghiêm trọng."""
+   
     LOW = "LOW"
     MEDIUM = "MEDIUM"
     HIGH = "HIGH"
@@ -26,7 +26,6 @@ class RuleSeverity(str, Enum):
 
 
 class Rule(BaseModel):
-    """Model đại diện cho một CIS rule."""
     rule_id: str = Field(..., description="Rule ID")
     title: str = Field(..., description="Tên rule")
     description: Optional[str] = Field(None, description="Mô tả chi tiết")
@@ -42,7 +41,6 @@ class Rule(BaseModel):
 
 
 class ViolationReport(BaseModel):
-    """Model đại diện cho một violation report."""
     agent_id: int = Field(..., description="ID của agent")
     rule_id: str = Field(..., description="Rule bị vi phạm")
     status: ViolationStatus = Field(..., description="PASS/FAIL/ERROR")
@@ -58,7 +56,7 @@ class ViolationReport(BaseModel):
 
 
 class ScanResult(BaseModel):
-    """Model đại diện cho kết quả scan."""
+
     agent_id: int = Field(..., description="ID của agent")
     scan_started_at: datetime = Field(..., description="Thời điểm bắt đầu scan")
     scan_completed_at: Optional[datetime] = Field(None, description="Thời điểm kết thúc")
@@ -110,7 +108,6 @@ class ScanResult(BaseModel):
 
 
 class AgentStatus(BaseModel):
-    """Model đại diện cho status của agent."""
     agent_id: int
     name: str
     os_type: str
@@ -121,12 +118,10 @@ class AgentStatus(BaseModel):
     current_compliance_rate: float = 0.0
     
     def update_heartbeat(self):
-        """Cập nhật thời gian heartbeat."""
         self.last_heartbeat = datetime.now(UTC)
         self.is_online = True
     
     def update_scan_result(self, result: ScanResult):
-        """Cập nhật sau khi scan xong."""
         self.last_scan_at = result.scan_completed_at
         self.total_scans += 1
         self.current_compliance_rate = result.compliance_rate
@@ -136,14 +131,14 @@ class AgentStatus(BaseModel):
 
 
 if __name__ == "__main__":
-    """Test models."""
+    
     import json
     
     print("=" * 60)
     print(" TESTING Models")
     print("=" * 60)
     
-    # Test 1: Rule model
+  
     print("\n  Testing Rule model:")
     rule = Rule(
         rule_id="UBU-01",
@@ -157,7 +152,7 @@ if __name__ == "__main__":
     print(f"   Rule: {rule.rule_id} - {rule.title}")
     print(f"   Severity: {rule.severity}")
     
-    # Test 2: ViolationReport model
+ 
     print("\n Testing ViolationReport model:")
     violation = ViolationReport(
         agent_id=1,
@@ -169,7 +164,7 @@ if __name__ == "__main__":
     print(f"   Violation: {violation.rule_id} - {violation.status}")
     print(f"   Details: {violation.details}")
     
-    # Test 3: ScanResult model
+
     print("\n  Testing ScanResult model:")
     result = ScanResult(
         agent_id=1,
@@ -177,7 +172,6 @@ if __name__ == "__main__":
         total_rules_checked=10
     )
     
-    # Thêm violations
     for i in range(7):
         result.violations.append(ViolationReport(
             agent_id=1,
@@ -189,7 +183,6 @@ if __name__ == "__main__":
     result.scan_completed_at = datetime.now(UTC)
     print(f"\n{result.summary()}")
     
-    # Test 4: JSON serialization
     print("\n  Testing JSON serialization:")
     violation_dict = violation.model_dump()
     print(f"    Violation as dict:")

@@ -4,13 +4,6 @@ Agent Setup Script
 ==================
 Script tự động cấu hình agent dựa trên thông tin hệ thống.
 
-Luồng:
-1. Thu thập system info tự động (hostname, OS, IP, MAC)
-2. Hỏi user nhập backend URL
-3. Tự động generate config.yaml phù hợp với máy này
-4. Test kết nối với backend
-5. Sẵn sàng chạy agent
-
 Usage:
     python3 agent/setup.py
     
@@ -113,7 +106,7 @@ class AgentSetup:
             api_token = input("\n API Token: ").strip()
             
         else:
-            # Non-interactive mode - use default or environment
+            # Non-interactive mode
             backend_url = os.getenv('AGENT_BACKEND_URL', 'http://localhost:8000')
             api_token = os.getenv('AGENT_API_TOKEN', '')
             print(f"\n   Backend URL: {backend_url}")
@@ -137,7 +130,7 @@ class AgentSetup:
         print(" STEP 3: Scanner Configuration")
         print("-" * 70)
         
-        # Auto-detect OS type
+        
         os_str = self.system_info['os'].lower()
         if 'ubuntu' in os_str or 'debian' in os_str:
             os_type = 'ubuntu'
@@ -146,7 +139,7 @@ class AgentSetup:
             os_type = 'windows'
             rules_path = './agent/rules/windows_rules.json'
         else:
-            os_type = 'ubuntu'  # Default
+            os_type = 'ubuntu' 
             rules_path = './agent/rules/ubuntu_rules.json'
         
         print(f"\n Auto-detected OS type: {os_type}")
@@ -177,9 +170,9 @@ class AgentSetup:
         else:
             scan_interval = int(os.getenv('AGENT_SCAN_INTERVAL', '3600'))
         
-        # Generate hostname for display
+       
         hostname = self.system_info['hostname']
-        # Shorten if too long
+      
         if len(hostname) > 50:
             display_name = hostname[:47] + "..."
         else:
@@ -312,26 +305,20 @@ class AgentSetup:
         """Run the setup wizard."""
         self.print_banner()
         
-        # Step 1: Collect system info
         if not self.collect_system_info():
             return False
         
-        # Step 2: Get backend config
         if not self.get_backend_config():
             return False
         
-        # Step 3: Get scanner config
         if not self.get_scanner_config():
             return False
         
-        # Step 4: Generate config file
         if not self.generate_config_file():
             return False
-        
-        # Step 5: Test connection
+      
         self.test_connection()
         
-        # Done
         self.print_next_steps()
         
         return True
@@ -362,14 +349,12 @@ def main():
     
     args = parser.parse_args()
     
-    # Set env vars if provided
     if args.backend_url:
         os.environ['AGENT_BACKEND_URL'] = args.backend_url
     
     if args.api_token:
         os.environ['AGENT_API_TOKEN'] = args.api_token
     
-    # Run setup
     setup = AgentSetup(interactive=not args.no_interactive)
     
     try:

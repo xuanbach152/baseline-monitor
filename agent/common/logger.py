@@ -19,34 +19,20 @@ def setup_logger(
     console_output: bool = True,
     name: str = "agent"
 ) -> logging.Logger:
-    """
-    Setup logging với file rotation.
     
-    Args:
-        log_level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-        log_file: Path to log file
-        max_bytes: Max file size trước khi rotate
-        backup_count: Số file backup giữ lại
-        console_output: In ra console không?
-        name: Logger name
-        
-    Returns:
-        Logger instance
-    """
-    # Tạo logger
     logger = logging.getLogger(name)
     logger.setLevel(getattr(logging, log_level.upper()))
     
-    # Clear existing handlers
+    
     logger.handlers.clear()
     
-    # Format
+    
     formatter = logging.Formatter(
         '%(asctime)s | %(levelname)-8s | %(name)s | %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
     
-    # File handler với rotation
+    
     log_path = Path(log_file)
     log_path.parent.mkdir(parents=True, exist_ok=True)
     
@@ -60,7 +46,7 @@ def setup_logger(
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
     
-    # Console handler (nếu cần)
+    
     if console_output:
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(logging.INFO)
@@ -71,15 +57,7 @@ def setup_logger(
 
 
 def get_logger(name: str = "agent") -> logging.Logger:
-    """
-    Get logger đã setup.
     
-    Args:
-        name: Logger name
-        
-    Returns:
-        Logger instance
-    """
     return logging.getLogger(name)
 
 
@@ -89,7 +67,7 @@ if __name__ == "__main__":
     print("TESTING Logger")
     print("=" * 60)
     
-    # Test với default config
+
     logger = setup_logger(
         log_level="DEBUG",
         log_file="./logs/test.log",

@@ -1,5 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { 
+  FileText, 
+  RefreshCw, 
+  Shield, 
+  AlertTriangle,
+  XCircle,
+  Clock,
+  Activity,
+  CheckCircle,
+  XOctagon,
+  Server,
+  Laptop,
+  Eye,
+  Folder
+} from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 import './RulesPage.css';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -9,6 +25,7 @@ export default function RulesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedRule, setSelectedRule] = useState(null);
+  const { theme } = useTheme();
 
   // Filters
   const [filterOS, setFilterOS] = useState('all'); // all, ubuntu, windows
@@ -46,11 +63,12 @@ export default function RulesPage() {
 
   const getSeverityIcon = (severity) => {
     const sev = (severity || '').toLowerCase();
-    if (sev === 'critical') return '🔴';
-    if (sev === 'high') return '🟠';
-    if (sev === 'medium') return '🟡';
-    if (sev === 'low') return '🟢';
-    return '⚪';
+    const iconProps = { size: 14, style: { display: 'inline', verticalAlign: 'middle' } };
+    if (sev === 'critical') return <XCircle {...iconProps} />;
+    if (sev === 'high') return <AlertTriangle {...iconProps} />;
+    if (sev === 'medium') return <Clock {...iconProps} />;
+    if (sev === 'low') return <Shield {...iconProps} />;
+    return <Activity {...iconProps} />;
   };
 
   // Get unique categories
@@ -103,20 +121,22 @@ export default function RulesPage() {
 
   if (loading) {
     return (
-      <div className="rules-page">
-        <h1>📋 Rules</h1>
-        <div className="loading">Loading rules...</div>
+      <div className={`rules-page ${theme === 'light' ? 'light-mode' : ''}`}>
+        <div className="page-header">
+          <h1><FileText size={32} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 12 }} />CIS Rules</h1>
+        </div>
+        <div className="loading"><Activity size={24} /> Loading rules...</div>
       </div>
     );
   }
 
   return (
-    <div className="rules-page">
+    <div className={`rules-page ${theme === 'light' ? 'light-mode' : ''}`}>
       {/* HEADER */}
       <div className="page-header">
-        <h1>📋 CIS Benchmark Rules</h1>
+        <h1><FileText size={32} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 12 }} />CIS Rules</h1>
         <button className="btn-primary" onClick={fetchRules}>
-          🔄 Refresh
+          <RefreshCw size={16} /> Refresh
         </button>
       </div>
 
@@ -137,11 +157,11 @@ export default function RulesPage() {
           <div className="stat-label">Inactive</div>
         </div>
         <div className="stat-box ubuntu">
-          <div className="stat-value">🐧 {stats.ubuntu}</div>
+          <div className="stat-value"><Server size={20} /> {stats.ubuntu}</div>
           <div className="stat-label">Ubuntu</div>
         </div>
         <div className="stat-box windows">
-          <div className="stat-value">🪟 {stats.windows}</div>
+          <div className="stat-value"><Laptop size={20} /> {stats.windows}</div>
           <div className="stat-label">Windows</div>
         </div>
       </div>
@@ -202,7 +222,7 @@ export default function RulesPage() {
       <div className="rules-grid">
         {filteredRules.length === 0 ? (
           <div className="empty-state">
-            <p>😔 No rules found matching your criteria</p>
+            <p> No rules found matching your criteria</p>
           </div>
         ) : (
           filteredRules.map((rule) => (
@@ -228,14 +248,15 @@ export default function RulesPage() {
                     {getSeverityIcon(rule.severity)} {(rule.severity || '').toUpperCase()}
                   </span>
                   <span className="os-badge">
-                    {rule.os_type === 'ubuntu' ? '🐧 Ubuntu' : '🪟 Windows'}
+                    {rule.os_type === 'ubuntu' ? <><Server size={14} /> Ubuntu</> : <><Laptop size={14} /> Windows</>}
                   </span>
                 </div>
               </div>
 
               <div className="rule-card-body">
                 <div className="rule-category">
-                  📁 {rule.category || 'Uncategorized'}
+                  <Shield size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />
+                  {rule.category || 'Uncategorized'}
                 </div>
                 <p className="rule-description">
                   {rule.description || 'No description available'}
@@ -244,9 +265,9 @@ export default function RulesPage() {
 
               <div className="rule-card-footer">
                 <span className={`status-indicator ${rule.active !== false ? 'active' : 'inactive'}`}>
-                  {rule.active !== false ? '✅ Active' : '⏸️ Inactive'}
+                  {rule.active !== false ? <><CheckCircle size={14} /> Active</> : <><XOctagon size={14} /> Inactive</>}
                 </span>
-                <button className="btn-view-details">View Details →</button>
+                <button className="btn-view-details"><Eye size={16} /> View Details</button>
               </div>
             </div>
           ))
@@ -258,9 +279,9 @@ export default function RulesPage() {
         <div className="modal-overlay" onClick={() => setSelectedRule(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>📋 Rule Details: {selectedRule.id}</h2>
+              <h2><FileText size={24} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }} />Rule Details: {selectedRule.id}</h2>
               <button className="modal-close" onClick={() => setSelectedRule(null)}>
-                ✕
+                <XOctagon size={24} />
               </button>
             </div>
 
@@ -279,13 +300,13 @@ export default function RulesPage() {
                     {getSeverityIcon(selectedRule.severity)} {(selectedRule.severity || '').toUpperCase()}
                   </span>
                   <span className="os-badge large">
-                    {selectedRule.os_type === 'ubuntu' ? '🐧 Ubuntu' : '🪟 Windows'}
+                    {selectedRule.os_type === 'ubuntu' ? <><Server size={14} /> Ubuntu</> : <><Laptop size={14} /> Windows</>}
                   </span>
                   <span className="category-badge">
-                    📁 {selectedRule.category}
+                    <Folder size={14} /> {selectedRule.category}
                   </span>
                   <span className={`status-badge large ${selectedRule.active !== false ? 'active' : 'inactive'}`}>
-                    {selectedRule.active !== false ? '✅ Active' : '⏸️ Inactive'}
+                    {selectedRule.active !== false ? <><CheckCircle size={14} /> Active</> : <><XOctagon size={14} /> Inactive</>}
                   </span>
                 </div>
               </div>

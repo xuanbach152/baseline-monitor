@@ -11,6 +11,7 @@ class RuleBase(BaseModel):
     check_expression: Optional[str] = None
     severity: str = Field(default="medium", pattern="^(low|medium|high|critical)$")
     category: Optional[str] = Field(None, max_length=50, description="Rule category (e.g., SSH, Firewall, Password Policy)")
+    os_type: Optional[str] = Field(None, max_length=20, description="OS type: ubuntu, windows")
     agent_rule_id: Optional[str] = Field(None, max_length=20, description="Agent-side rule ID (e.g., UBU-01, WIN-03)")
 
 
@@ -27,6 +28,7 @@ class RuleUpdate(BaseModel):
     check_expression: Optional[str] = None
     severity: Optional[str] = Field(None, pattern="^(low|medium|high|critical)$")
     category: Optional[str] = Field(None, max_length=50, description="Rule category")
+    os_type: Optional[str] = Field(None, max_length=20, description="OS type: ubuntu, windows")
     active: Optional[bool] = None
     agent_rule_id: Optional[str] = Field(None, max_length=20, description="Agent-side rule ID")
 
