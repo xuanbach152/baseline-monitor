@@ -9,13 +9,7 @@ from .schemas import UserResponse
 def login_user(db: Session, username: str, password: str) -> dict:
     """
     Login user with username and password.
-    
-    Validates credentials and active status.
-    Returns user info if successful.
-    
-    Raises:
-        - 401: Invalid credentials
-        - 403: User account is inactive
+   
     """
     # Authenticate user (raises 401 if invalid)
     user = crud.authenticate_user(db, username, password)

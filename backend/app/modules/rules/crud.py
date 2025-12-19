@@ -39,7 +39,8 @@ def get_rules(
     skip: int = 0,
     limit: int = 100,
     active: Optional[bool] = None,
-    severity: Optional[str] = None
+    severity: Optional[str] = None,
+    os_type: Optional[str] = None
 ) -> List[Rule]:
     """Get list of rules with optional filters."""
     query = db.query(Rule)
@@ -49,6 +50,9 @@ def get_rules(
     
     if severity:
         query = query.filter(Rule.severity == severity)
+    
+    if os_type:
+        query = query.filter(Rule.os_type == os_type)
     
     return query.offset(skip).limit(limit).all()
 

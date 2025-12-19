@@ -1,6 +1,6 @@
 """
 Script reset database (drop all tables, recreate, migrate, seed).
-⚠️  CHỈ DÙNG TRONG MÔI TRƯỜNG DEV - SẼ XÓA TOÀN BỘ DỮ LIỆU!
+CHỈ DÙNG TRONG MÔI TRƯỜNG DEV - SẼ XÓA TOÀN BỘ DỮ LIỆU!
 
 Usage:
     python scripts/reset_db.py --force
@@ -21,7 +21,7 @@ from app.core.config import settings
 def confirm_reset():
     """Xác nhận trước khi reset."""
     print("\n" + "="*60)
-    print("⚠️  WARNING: DATABASE RESET")
+    print("WARNING: DATABASE RESET")
     print("="*60)
     print(f"Database: {settings.DATABASE_URL}")
     print("\nThis will:")
@@ -29,7 +29,7 @@ def confirm_reset():
     print("  2. Recreate tables")
     print("  3. Run migrations")
     print("  4. Seed sample data")
-    print("\n❌ ALL DATA WILL BE LOST!")
+    print("\nALL DATA WILL BE LOST!")
     print("="*60)
     
     response = input("\nType 'RESET' to confirm: ")
@@ -38,7 +38,7 @@ def confirm_reset():
 
 def drop_all_tables():
     """Drop toàn bộ tables và reset Alembic history."""
-    print("\n🗑️  Dropping all tables and resetting Alembic...")
+    print("\n Dropping all tables and resetting Alembic...")
     
     try:
         with engine.connect() as conn:
@@ -57,10 +57,10 @@ def drop_all_tables():
             # Commit transaction
             conn.commit()
         
-        print("✅ All tables dropped successfully")
+        print("All tables dropped successfully")
         return True
     except Exception as e:
-        print(f"❌ Error dropping tables: {e}")
+        print(f"Error dropping tables: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -68,36 +68,36 @@ def drop_all_tables():
 
 def create_tables():
     """Tạo lại tables - SKIPPED (Alembic migrations sẽ làm việc này)."""
-    print("\n🏗️  Skipping manual table creation (using Alembic migrations)...")
+    print("\nSkipping manual table creation (using Alembic migrations)...")
     # Không cần tạo tables manually vì Alembic sẽ tạo
     # Base.metadata.create_all(bind=engine)
-    print("✅ Ready for migrations")
+    print(" Ready for migrations")
     return True
 
 
 def run_migrations():
     """Chạy Alembic migrations."""
-    print("\n🔄 Running Alembic migrations...")
+    print("\n Running Alembic migrations...")
     
     try:
         subprocess.run(["alembic", "upgrade", "head"], check=True)
-        print("✅ Migrations completed")
+        print(" Migrations completed")
         return True
     except subprocess.CalledProcessError as e:
-        print(f"❌ Migration failed: {e}")
+        print(f" Migration failed: {e}")
         return False
 
 
 def seed_data():
     """Seed dữ liệu mẫu."""
-    print("\n🌱 Seeding sample data...")
+    print("\n Seeding sample data...")
     
     try:
         from scripts.seed_data import main as seed_main
         seed_main()
         return True
     except Exception as e:
-        print(f"❌ Seeding failed: {e}")
+        print(f" Seeding failed: {e}")
         return False
 
 
@@ -107,15 +107,15 @@ def reset_database(force: bool = False):
     # Kiểm tra môi trường
     env = settings.ENV if hasattr(settings, 'ENV') else "development"
     if env == "production" and not force:
-        print("❌ Cannot reset production database without --force flag!")
+        print("Cannot reset production database without --force flag!")
         return False
     
     # Xác nhận
     if not force and not confirm_reset():
-        print("\n❌ Reset cancelled.")
+        print("\n Reset cancelled.")
         return False
     
-    print("\n🚀 Starting database reset...")
+    print("\n Starting database reset...")
     
     # Execute reset steps
     steps = [
@@ -127,11 +127,11 @@ def reset_database(force: bool = False):
     
     for step_name, step_func in steps:
         if not step_func():
-            print(f"\n❌ Reset failed at step: {step_name}")
+            print(f"\n Reset failed at step: {step_name}")
             return False
     
     print("\n" + "="*60)
-    print("✅ Database reset completed successfully!")
+    print(" Database reset completed successfully!")
     print("="*60)
     return True
 
@@ -160,7 +160,7 @@ Examples:
     args = parser.parse_args()
     
     if not args.force:
-        print("❌ Error: --force flag is required for safety")
+        print(" Error: --force flag is required for safety")
         print("Usage: python scripts/reset_db.py --force")
         sys.exit(1)
     

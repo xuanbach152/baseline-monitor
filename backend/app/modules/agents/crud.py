@@ -47,19 +47,6 @@ def get_agents(
 def create_agent(db: Session, agent: AgentCreate) -> Agent:
     """
     Register new agent or update existing one (UPSERT).
-    
-    Auto-registration logic:
-    - If hostname exists: Update agent info (IP, OS, version, mark online)
-    - If hostname not exists: Create new agent
-    
-    This allows agents to auto-register on first run without manual setup.
-    
-    Args:
-        db: Database session
-        agent: Agent data to create/update
-    
-    Returns:
-        Agent: Created or updated agent object
     """
     # Check if agent with this hostname already exists
     existing_agent = get_agent_by_hostname(db, agent.hostname)
@@ -143,3 +130,58 @@ def get_online_agents_count(db: Session) -> int:
 def get_total_agents_count(db: Session) -> int:
     """Get total count of agents."""
     return db.query(Agent).count()
+
+
+def calculate_agent_compliance(db: Session, agent_id: int) -> float:
+    """
+    Calculate compliance rate for an agent.
+    
+    Compliance = (Total Active Rules - Unresolved Violations) / Total Active Rules * 100
+    
+    Returns:
+        float: Compliance percentage (0-100)
+    """
+    from app.modules.rules.models import Rule
+    from app.modules.violations.models import Violation
+    
+    # Get total active rules
+    total_rules = db.query(Rule).filter(Rule.active == True).count()
+    
+    print(f"[COMPLIANCE DEBUG] Agent {agent_id}: total_rules={total_rules}")
+    
+    if total_rules == 0:
+        return 100.0  # No rules = 100% compliant
+    
+    # Get unresolved violations for this agent
+    unresolved_violations = db.query(Violation).filter(
+        Violation.agent_id == agent_id,
+        Violation.resolved_at.is_(None)
+    ).count()
+    
+    print(f"[COMPLIANCE DEBUG] Agent {agent_id}: unresolved_violations={unresolved_violations}")
+    
+    # Calculate compliance rate
+    compliance = max(0, (total_rules - unresolved_violations) / total_rules * 100)
+    
+    print(f"[COMPLIANCE DEBUG] Agent {agent_id}: compliance={compliance}")
+    
+    return round(compliance, 2)
+
+
+def update_agent_compliance(db: Session, agent_id: int) -> Agent:
+    """
+    Update agent's compliance rate.
+    """
+    db_agent = get_agent(db, agent_id)
+    db_agent.compliance_rate = calculate_agent_compliance(db, agent_id)
+    db.commit()
+    db.refresh(db_agent)
+    return db_agent
+
+
+def update_all_agents_compliance(db: Session) -> None:
+    """Update compliance rate for all agents."""
+    agents = db.query(Agent).all()
+    for agent in agents:
+        agent.compliance_rate = calculate_agent_compliance(db, agent.id)
+    db.commit()

@@ -47,3 +47,8 @@ flake8==7.1.1              # Check lỗi code style
 
 # === Logging (optional) ===
 loguru==0.7.2              # Logging hiện đại, dễ dùng hơn logging mặc định
+
+# === Report Generation ===
+reportlab==4.0.7           # PDF generation
+pandas==2.1.4              # Data manipulation for reports
+openpyxl==3.1.2            # Excel file generation

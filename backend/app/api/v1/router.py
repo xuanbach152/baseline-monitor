@@ -5,6 +5,8 @@ from app.modules.users.router import router as users_router
 from app.modules.rules.router import router as rules_router
 from app.modules.agents.router import router as agents_router
 from app.modules.violations.router import router as violations_router
+from app.modules.websocket.router import router as websocket_router
+from app.modules.reports.router import router as reports_router
 
 api_router = APIRouter(prefix="/api/v1")
 
@@ -13,3 +15,6 @@ api_router.include_router(users_router)
 api_router.include_router(rules_router)
 api_router.include_router(agents_router)
 api_router.include_router(violations_router)
+api_router.include_router(websocket_router, tags=["WebSocket"])
+api_router.include_router(reports_router)
+

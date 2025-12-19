@@ -38,10 +38,10 @@ except ImportError:
 def seed_users(db: Session):
     """Seed multiple users với các roles khác nhau."""
     if not HAS_AUTH:
-        print("⚠️  Auth module not available, skipping user seeding")
+        print(" Auth module not available, skipping user seeding")
         return
         
-    print("🧑‍💼 Seeding users...")
+    print("  Seeding users...")
     
     users_data = [
         {"username": "admin", "email": "admin@baseline.local", 
@@ -68,7 +68,7 @@ def seed_users(db: Session):
     
     if created_count > 0:
         db.commit()
-        print(f"✅ Created {created_count} new users.")
+        print(f" Created {created_count} new users.")
     else:
         print("  - All users already exist.")
 
@@ -315,10 +315,10 @@ def seed_agents(db: Session):
     existing_count = db.query(Agent).count()
     
     if existing_count > 0:
-        print(f"✅ Agents already exist ({existing_count} agents in database).")
+        print(f" Agents already exist ({existing_count} agents in database).")
         return
 
-    print("🖥️  Seeding sample agents...")
+    print("  Seeding sample agents...")
     
     agents = [
         Agent(
@@ -349,7 +349,7 @@ def seed_agents(db: Session):
     
     db.add_all(agents)
     db.commit()
-    print(f"✅ Seeded {len(agents)} agents successfully.")
+    print(f" Seeded {len(agents)} agents successfully.")
 
 
 def main():
@@ -361,7 +361,7 @@ def main():
     
     try:
         print("\n" + "="*70)
-        print("🌱 SEEDING DATABASE WITH SAMPLE DATA")
+        print(" SEEDING DATABASE WITH SAMPLE DATA")
         print("="*70 + "\n")
         
         seed_users(db)
@@ -371,18 +371,18 @@ def main():
         seed_agents(db)
         
         print("\n" + "="*70)
-        print("✅ ALL SEED DATA COMPLETED SUCCESSFULLY!")
+        print(" ALL SEED DATA COMPLETED SUCCESSFULLY!")
         print("="*70)
         
         if HAS_AUTH:
-            print("\n📝 Default credentials:")
+            print("\n Default credentials:")
             print("  Admin:    username=admin    password=admin123")
             print("  Operator: username=operator password=operator123")
             print("  Viewer:   username=viewer   password=viewer123")
         
         print()
     except Exception as e:
-        print(f"\n❌ Error during seeding: {e}")
+        print(f"\n Error during seeding: {e}")
         db.rollback()
         raise
     finally:

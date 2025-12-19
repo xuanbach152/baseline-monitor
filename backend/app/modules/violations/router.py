@@ -2,8 +2,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from loguru import logger
 
 from app.core.dependencies import get_db
+from app.modules.websocket.service import manager
+from app.modules.agents import crud as agents_crud
 from . import crud
 from .schemas import (
     ViolationCreate,
@@ -17,37 +20,39 @@ from .schemas import (
 router = APIRouter(prefix="/violations", tags=["violations"])
 
 
-# ============================================================================
-# CREATE Operations
-# ============================================================================
-
 @router.post("/", response_model=ViolationResponse, status_code=status.HTTP_201_CREATED)
-def create_violation(violation: ViolationCreate, db: Session = Depends(get_db)):
+async def create_violation(violation: ViolationCreate, db: Session = Depends(get_db)):
     """
     Create a new violation record.
-    
-    - **agent_id**: ID of the agent where violation was detected
-    - **rule_id**: ID of the rule that was violated (Integer)
-    - **message**: Description of the violation
-    - **confidence_score**: Confidence level (0.0-1.0)
     """
-    return crud.create_violation(db, violation)
+    new_violation = crud.create_violation(db, violation)
+  
+    from app.modules.agents import crud as agents_crud
+    try:
+        logger.info(f"Updating compliance for agent {new_violation.agent_id}")
+        agents_crud.update_agent_compliance(db, new_violation.agent_id)
+        logger.info(f"Compliance updated successfully")
+    except Exception as e:
+        # Log but don't fail the request
+        logger.error(f"Failed to update agent compliance: {e}")
+    
+    await manager.broadcast_violation_created({
+        "id": new_violation.id,
+        "agent_id": new_violation.agent_id,
+        "rule_id": new_violation.rule_id,
+        "message": new_violation.message,
+        "confidence_score": new_violation.confidence_score,
+        "detected_at": new_violation.detected_at.isoformat() if new_violation.detected_at else None
+    })
+    
+    return new_violation
 
 
 @router.post("/from-agent", response_model=ViolationResponse, status_code=status.HTTP_201_CREATED)
 def create_violation_from_agent(violation: ViolationCreateFromAgent, db: Session = Depends(get_db)):
     """
     Create violation from agent (uses agent_rule_id instead of rule_id).
-    
-    Agents report violations using agent_rule_id (e.g., 'UBU-01'), 
-    this endpoint converts it to backend rule_id before saving.
-    
-    - **agent_id**: ID of the agent
-    - **agent_rule_id**: Agent-side rule ID (e.g., 'UBU-01', 'WIN-03')
-    - **message**: Description of the violation
-    - **confidence_score**: Confidence level (0.0-1.0)
     """
-    # Lookup rule by agent_rule_id
     from app.modules.rules import crud as rules_crud
     rule = rules_crud.get_rule_by_agent_id(db, violation.agent_rule_id)
     
@@ -57,10 +62,9 @@ def create_violation_from_agent(violation: ViolationCreateFromAgent, db: Session
             detail=f"Rule with agent_rule_id '{violation.agent_rule_id}' not found"
         )
     
-    # Convert to ViolationCreate with Integer rule_id
     violation_data = ViolationCreate(
         agent_id=violation.agent_id,
-        rule_id=rule.id,  # Convert agent_rule_id -> rule.id
+        rule_id=rule.id, 
         message=violation.message,
         confidence_score=violation.confidence_score
     )
@@ -68,9 +72,71 @@ def create_violation_from_agent(violation: ViolationCreateFromAgent, db: Session
     return crud.create_violation(db, violation_data)
 
 
-# ============================================================================
-# READ Operations - List
-# ============================================================================
+@router.post("/agents/{agent_id}/violations/bulk")
+def create_violations_bulk(
+    agent_id: int,
+    violations_data: dict,
+    db: Session = Depends(get_db)
+):
+    """
+    Bulk create violations from agent.
+    
+    - **agent_id**: ID of the agent reporting violations
+    - **violations_data**: Dict with 'violations' list containing violation reports
+    
+    Returns count of successfully created violations.
+    """
+    from app.modules.rules import crud as rules_crud
+    
+    violations_list = violations_data.get('violations', [])
+    
+    if not violations_list:
+        return {"message": "No violations to create", "created_count": 0}
+    
+    created_count = 0
+    errors = []
+    
+    for idx, vio in enumerate(violations_list):
+        try:
+            # Lookup rule by agent_rule_id or rule_id
+            rule_id = vio.get('rule_id')
+            agent_rule_id = vio.get('agent_rule_id')
+            
+            if agent_rule_id:
+                try:
+                    rule = rules_crud.get_rule_by_agent_id(db, agent_rule_id)
+                    rule_id = rule.id
+                except HTTPException:
+                    errors.append(f"Violation {idx}: Rule '{agent_rule_id}' not found")
+                    continue
+            
+            if not rule_id:
+                errors.append(f"Violation {idx}: Missing rule_id or agent_rule_id")
+                continue
+            
+            # Create violation
+            violation_data = ViolationCreate(
+                agent_id=vio.get('agent_id', agent_id),
+                rule_id=rule_id,
+                message=vio.get('message', 'Violation detected'),
+                confidence_score=vio.get('confidence_score', 1.0)
+            )
+            
+            crud.create_violation(db, violation_data)
+            created_count += 1
+            
+        except Exception as e:
+            errors.append(f"Violation {idx}: {str(e)}")
+            continue
+    
+    return {
+        "message": f"Created {created_count}/{len(violations_list)} violations",
+        "created_count": created_count,
+        "total_submitted": len(violations_list),
+        "errors": errors if errors else None
+    }
+
+
 
 @router.get("/", response_model=List[ViolationResponse])
 def list_violations(
@@ -84,11 +150,6 @@ def list_violations(
     """
     Get list of violations with optional filters.
     
-    - **skip**: Number of records to skip (pagination)
-    - **limit**: Maximum number of records to return
-    - **agent_id**: Filter by specific agent
-    - **rule_id**: Filter by specific rule
-    - **severity**: Filter by severity level
     """
     return crud.get_violations(
         db, 
@@ -99,11 +160,6 @@ def list_violations(
         severity=severity
     )
 
-
-# ============================================================================
-# READ Operations - Special Routes (must be before /{id})
-# ============================================================================
-
 @router.get("/recent", response_model=List[ViolationResponse])
 def get_recent_violations(
     hours: int = Query(24, ge=1, le=168, description="Number of hours (1-168)"),
@@ -112,9 +168,6 @@ def get_recent_violations(
 ):
     """
     Get recent violations within specified hours.
-    
-    - **hours**: Time window in hours (default: 24, max: 168 = 7 days)
-    - **limit**: Maximum number of records to return (default: 50)
     """
     return crud.get_recent_violations(db, hours=hours, limit=limit)
 
@@ -123,12 +176,6 @@ def get_recent_violations(
 def get_violation_statistics(db: Session = Depends(get_db)):
     """
     Get comprehensive violation statistics.
-    
-    Returns:
-    - Total violation count
-    - Recent violations (24h)
-    - Breakdown by severity
-    - Top 5 agents with most violations
     """
     return crud.get_violation_stats(db)
 
@@ -156,7 +203,6 @@ def get_by_agent(db: Session = Depends(get_db)):
     """
     Get violations count grouped by agent.
     
-    Returns count for each agent with hostname.
     """
     return crud.get_violations_count_by_agent(db)
 
@@ -168,13 +214,29 @@ def get_recent_count(
 ):
     """
     Get count of violations in the last X hours.
-    
-    - **hours**: Time window in hours (default: 24)
+
     """
     return {
         "hours": hours,
         "count": crud.get_recent_violations_count(db, hours=hours)
     }
+
+
+@router.get("/stats/7day-trend")
+def get_7day_trend(db: Session = Depends(get_db)):
+    """
+    Get 7-day violation trend (count per day for last 7 days).
+    """
+    return crud.get_7day_trend(db)
+
+
+@router.get("/stats/top-5-recent", response_model=List[ViolationResponse])
+def get_top_5_recent(db: Session = Depends(get_db)):
+    """
+    Get top 5 most recent violations.
+    
+    """
+    return crud.get_top_5_recent_violations(db)
 
 
 @router.get("/agent/{agent_id}", response_model=List[ViolationResponse])
@@ -186,10 +248,6 @@ def get_violations_by_agent(
 ):
     """
     Get all violations for a specific agent.
-    
-    - **agent_id**: ID of the agent
-    - **skip**: Number of records to skip
-    - **limit**: Maximum number of records to return
     """
     return crud.get_violations_by_agent(db, agent_id, skip=skip, limit=limit)
 
@@ -203,17 +261,9 @@ def get_violations_by_rule(
 ):
     """
     Get all violations for a specific rule.
-    
-    - **rule_id**: ID of the rule
-    - **skip**: Number of records to skip
-    - **limit**: Maximum number of records to return
     """
     return crud.get_violations_by_rule(db, rule_id, skip=skip, limit=limit)
 
-
-# ============================================================================
-# READ Operations - By ID (must be last in GET)
-# ============================================================================
 
 @router.get("/{violation_id}", response_model=ViolationResponse)
 def get_violation(violation_id: int, db: Session = Depends(get_db)):
@@ -222,13 +272,8 @@ def get_violation(violation_id: int, db: Session = Depends(get_db)):
     """
     return crud.get_violation(db, violation_id)
 
-
-# ============================================================================
-# UPDATE Operations
-# ============================================================================
-
 @router.put("/{violation_id}", response_model=ViolationResponse)
-def update_violation(
+async def update_violation(
     violation_id: int, 
     violation_update: ViolationUpdate, 
     db: Session = Depends(get_db)
@@ -236,22 +281,49 @@ def update_violation(
     """
     Update violation information.
     
-    All fields are optional. Only provided fields will be updated.
-    Common use case: Update message or confidence_score.
     """
-    return crud.update_violation(db, violation_id, violation_update)
-
-
-# ============================================================================
-# DELETE Operations
-# ============================================================================
+    updated_violation = crud.update_violation(db, violation_id, violation_update)
+    
+    # Update agent compliance after resolution
+    try:
+        agents_crud.update_agent_compliance(db, updated_violation.agent_id)
+    except Exception as e:
+        logger.warning(f"Failed to update agent compliance: {str(e)}")
+    
+    # If resolved, broadcast resolution event
+    if violation_update.resolved_at or violation_update.resolved_by:
+        await manager.broadcast_violation_resolved({
+            "id": updated_violation.id,
+            "resolved_at": updated_violation.resolved_at.isoformat() if updated_violation.resolved_at else None,
+            "resolved_by": updated_violation.resolved_by,
+            "resolution_notes": updated_violation.resolution_notes
+        })
+    
+    return updated_violation
 
 @router.delete("/{violation_id}")
-def delete_violation(violation_id: int, db: Session = Depends(get_db)):
+async def delete_violation(violation_id: int, db: Session = Depends(get_db)):
     """
     Delete a single violation.
     """
+    # Get violation first to retrieve agent_id before deletion
+    violation = crud.get_violation(db, violation_id)
+    if not violation:
+        raise HTTPException(status_code=404, detail="Violation not found")
+    
+    agent_id = violation.agent_id
+    
     crud.delete_violation(db, violation_id)
+    
+    # Update agent compliance after deletion
+    try:
+        agents_crud.update_agent_compliance(db, agent_id)
+    except Exception as e:
+        logger.warning(f"Failed to update agent compliance: {str(e)}")
+    
+    # Broadcast deletion
+    await manager.broadcast_violation_deleted(str(violation_id))
+    
     return {
         "message": "Violation deleted successfully",
         "violation_id": violation_id
@@ -262,8 +334,6 @@ def delete_violation(violation_id: int, db: Session = Depends(get_db)):
 def delete_agent_violations(agent_id: int, db: Session = Depends(get_db)):
     """
     Delete all violations for a specific agent.
-    
-    Use case: Cleanup when unregistering an agent.
     """
     deleted_count = crud.delete_violations_by_agent(db, agent_id)
     return {

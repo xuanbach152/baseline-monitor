@@ -1,8 +1,8 @@
 .settings-page {
   padding: 24px;
-  max-width: 100%;
+  min-width: 100%;
   margin: 0;
-  width: 100%;
+  width: 1520px;
   box-sizing: border-box;
 }
 
@@ -106,6 +106,12 @@
   gap: 10px;
 }
 
+.settings-page.light-mode .success-message {
+  background: rgba(0, 200, 83, 0.1);
+  border-color: #00c853;
+  color: #00a843;
+}
+
 .settings-section {
   background: linear-gradient(135deg, #1a1d23, #23272b);
   border: 2px solid #2a2d35;
@@ -113,6 +119,12 @@
   padding: 28px;
   margin-bottom: 24px;
   max-width: 100%;
+}
+
+.settings-page.light-mode .settings-section {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .settings-section h2 {
@@ -177,6 +189,14 @@
   transition: all 0.2s;
 }
 
+.settings-page.light-mode .setting-item input[type="number"],
+.settings-page.light-mode .setting-item input[type="text"],
+.settings-page.light-mode .setting-item select {
+  background: #ffffff;
+  border: 1px solid #d0d0d0;
+  color: #23272b;
+}
+
 .setting-item input:focus,
 .setting-item select:focus {
   outline: none;
@@ -204,6 +224,11 @@
   background: #0d0f14;
   border: 2px solid #2a2d35;
   border-radius: 8px;
+}
+
+.settings-page.light-mode .info-item {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
 }
 
 .info-label {

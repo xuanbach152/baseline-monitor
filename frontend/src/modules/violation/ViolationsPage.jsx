@@ -7,14 +7,19 @@ import {
   CheckCircle, 
   Clock,
   Activity,
-  XCircle
+  XCircle,
+  Edit,
+  Trash2
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
+import ResolveModal from './ResolveModal';
 import './ViolationsPage.css';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default function ViolationsPage() {
+  const { t } = useTranslation();
   const [violations, setViolations] = useState([]);
   const [agents, setAgents] = useState([]);
   const [rules, setRules] = useState([]);
@@ -32,6 +37,10 @@ export default function ViolationsPage() {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
+
+  // Modals
+  const [resolveModal, setResolveModal] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -75,6 +84,30 @@ export default function ViolationsPage() {
     if (sev === 'medium') return <Clock {...iconProps} />;
     if (sev === 'low') return <Shield {...iconProps} />;
     return <Activity {...iconProps} />;
+  };
+
+  const handleResolve = async (violationId, data) => {
+    try {
+      await axios.put(`${API_URL}/violations/${violationId}`, data);
+      await fetchData(); // Refresh data
+    } catch (err) {
+      console.error('Failed to resolve violation:', err);
+      throw err;
+    }
+  };
+
+  const handleDelete = async (violationId) => {
+    if (!window.confirm('Are you sure you want to delete this violation?')) {
+      return;
+    }
+    
+    try {
+      await axios.delete(`${API_URL}/violations/${violationId}`);
+      await fetchData(); // Refresh data
+    } catch (err) {
+      console.error('Failed to delete violation:', err);
+      alert('Failed to delete violation');
+    }
   };
 
   // Filter violations
@@ -156,9 +189,9 @@ export default function ViolationsPage() {
     <div className={`violations-page ${theme === 'light' ? 'light-mode' : ''}`}>
       {/* HEADER */}
       <div className="page-header">
-        <h1><AlertTriangle size={32} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 12 }} />Violations</h1>
+        <h1><AlertTriangle size={32} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 12 }} />{t('violations.title')}</h1>
         <button className="btn-primary" onClick={fetchData}>
-          <RefreshCw size={16} /> Refresh
+          <RefreshCw size={16} /> {t('common.refresh')}
         </button>
       </div>
 
@@ -168,47 +201,47 @@ export default function ViolationsPage() {
       <div className="violations-stats">
         <div className="stat-box">
           <div className="stat-value">{stats.total}</div>
-          <div className="stat-label">Total</div>
+          <div className="stat-label">{t('violations.total')}</div>
         </div>
         <div className="stat-box unresolved">
           <div className="stat-value">{stats.unresolved}</div>
-          <div className="stat-label">Unresolved</div>
+          <div className="stat-label">{t('violations.unresolved')}</div>
         </div>
         <div className="stat-box resolved">
           <div className="stat-value">{stats.resolved}</div>
-          <div className="stat-label">Resolved</div>
+          <div className="stat-label">{t('violations.resolved')}</div>
         </div>
         <div className="stat-box critical">
           <div className="stat-value">{stats.bySeverity.critical}</div>
-          <div className="stat-label">Critical</div>
+          <div className="stat-label">{t('violations.critical')}</div>
         </div>
         <div className="stat-box high">
           <div className="stat-value">{stats.bySeverity.high}</div>
-          <div className="stat-label">High</div>
+          <div className="stat-label">{t('violations.high')}</div>
         </div>
         <div className="stat-box medium">
           <div className="stat-value">{stats.bySeverity.medium}</div>
-          <div className="stat-label">Medium</div>
+          <div className="stat-label">{t('violations.medium')}</div>
         </div>
       </div>
 
       {/* FILTERS */}
       <div className="filters-bar">
         <div className="filter-group">
-          <label>Severity:</label>
+          <label>{t('violations.severity')}:</label>
           <select value={filterSeverity} onChange={(e) => setFilterSeverity(e.target.value)}>
-            <option value="all">All</option>
-            <option value="critical">Critical</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
+            <option value="all">{t('rules.all')}</option>
+            <option value="critical">{t('common.critical')}</option>
+            <option value="high">{t('common.high')}</option>
+            <option value="medium">{t('common.medium')}</option>
+            <option value="low">{t('common.low')}</option>
           </select>
         </div>
 
         <div className="filter-group">
-          <label>Agent:</label>
+          <label>{t('violations.agent')}:</label>
           <select value={filterAgent} onChange={(e) => setFilterAgent(e.target.value)}>
-            <option value="all">All Agents</option>
+            <option value="all">{t('violations.allAgents')}</option>
             {agents.map(agent => (
               <option key={agent.id} value={agent.id}>
                 {agent.hostname}
@@ -218,9 +251,9 @@ export default function ViolationsPage() {
         </div>
 
         <div className="filter-group">
-          <label>Rule:</label>
+          <label>{t('violations.rule')}:</label>
           <select value={filterRule} onChange={(e) => setFilterRule(e.target.value)}>
-            <option value="all">All Rules</option>
+            <option value="all">{t('violations.allRules')}</option>
             {rules.map(rule => (
               <option key={rule.id} value={rule.id}>
                 {rule.name}
@@ -230,19 +263,19 @@ export default function ViolationsPage() {
         </div>
 
         <div className="filter-group">
-          <label>Status:</label>
+          <label>{t('violations.status')}:</label>
           <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-            <option value="all">All</option>
-            <option value="unresolved">Unresolved</option>
-            <option value="resolved">Resolved</option>
+            <option value="all">{t('rules.all')}</option>
+            <option value="unresolved">{t('violations.unresolved')}</option>
+            <option value="resolved">{t('violations.resolved')}</option>
           </select>
         </div>
 
         <div className="filter-group search-group">
-          <label>Search:</label>
+          <label>{t('common.search')}:</label>
           <input
             type="text"
-            placeholder="Search violations..."
+            placeholder={t('violations.searchViolations')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -254,20 +287,21 @@ export default function ViolationsPage() {
         <table className="violations-table">
           <thead>
             <tr>
-              <th>Time</th>
-              <th>Severity</th>
-              <th>Agent</th>
-              <th>Rule</th>
-              <th>Message</th>
-              <th>Status</th>
+              <th>{t('violations.time')}</th>
+              <th>{t('violations.severity')}</th>
+              <th>{t('violations.agent')}</th>
+              <th>{t('violations.rule')}</th>
+              <th>{t('violations.message')}</th>
+              <th>{t('violations.status')}</th>
+              <th>{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody>
             {paginatedViolations.length === 0 ? (
               <tr>
-                <td colSpan={6} className="empty-state">
+                <td colSpan={7} className="empty-state">
                   <AlertTriangle size={24} style={{ opacity: 0.3, marginRight: 8 }} />
-                  No violations found matching your criteria
+                  {t('violations.noViolations')}
                 </td>
               </tr>
             ) : (
@@ -311,6 +345,26 @@ export default function ViolationsPage() {
                         <span className="status-badge unresolved"><Clock size={14} /> Open</span>
                       )}
                     </td>
+                    <td className="actions-cell">
+                      <div className="action-buttons">
+                        {!violation.resolved_at && (
+                          <button
+                            className="action-btn resolve-btn"
+                            onClick={() => setResolveModal(violation)}
+                            title="Resolve violation"
+                          >
+                            <CheckCircle size={16} />
+                          </button>
+                        )}
+                        <button
+                          className="action-btn delete-btn"
+                          onClick={() => handleDelete(violation.id)}
+                          title="Delete violation"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 );
               })
@@ -338,7 +392,7 @@ export default function ViolationsPage() {
           </button>
           
           <span className="page-info">
-            Page {currentPage} of {totalPages} ({filteredViolations.length} violations)
+            {t('violations.page')} {currentPage} {t('violations.of')} {totalPages} ({filteredViolations.length} {t('violations.violations')})
           </span>
           
           <button
@@ -356,6 +410,15 @@ export default function ViolationsPage() {
             »»
           </button>
         </div>
+      )}
+
+      {/* RESOLVE MODAL */}
+      {resolveModal && (
+        <ResolveModal
+          violation={resolveModal}
+          onClose={() => setResolveModal(null)}
+          onResolve={handleResolve}
+        />
       )}
     </div>
   );

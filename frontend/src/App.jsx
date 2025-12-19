@@ -7,6 +7,7 @@ import AgentsPage from "./modules/agent/AgentsPage";
 import ViolationsPage from "./modules/violation/ViolationsPage";
 import RulesPage from "./modules/settings/RulesPage";
 import SettingsPage from "./modules/settings/SettingsPage";
+import ReportsPage from "./modules/reports/ReportsPage";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
             <Route path="/agents" element={<AgentsPage />} />
             <Route path="/violations" element={<ViolationsPage />} />
             <Route path="/rules" element={<RulesPage />} />
+            <Route path="/reports" element={<ReportsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </Layout>

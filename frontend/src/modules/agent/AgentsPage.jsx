@@ -11,14 +11,19 @@ import {
   X,
   FileText,
   Activity,
-  HardDrive
+  HardDrive,
+  Edit,
+  Trash2
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
+import EditAgentModal from './EditAgentModal';
 import './AgentsPage.css';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default function AgentsPage() {
+  const { t } = useTranslation();
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -26,6 +31,7 @@ export default function AgentsPage() {
   const [filterOS, setFilterOS] = useState('all'); // all, ubuntu, windows
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAgent, setSelectedAgent] = useState(null);
+  const [editModal, setEditModal] = useState(null);
   const { theme } = useTheme();
 
   useEffect(() => {
@@ -86,6 +92,32 @@ export default function AgentsPage() {
     </span>
   );
 
+  const handleEdit = async (agentId, data) => {
+    try {
+      await axios.put(`${API_URL}/agents/${agentId}`, data);
+      await fetchAgents(); // Refresh list
+      setEditModal(null);
+    } catch (err) {
+      console.error('Failed to update agent:', err);
+      throw err;
+    }
+  };
+
+  const handleDelete = async (agentId) => {
+    if (!window.confirm('Are you sure you want to delete this agent? This will also delete all its violations.')) {
+      return;
+    }
+    
+    try {
+      await axios.delete(`${API_URL}/agents/${agentId}`);
+      await fetchAgents(); // Refresh list
+      setSelectedAgent(null);
+    } catch (err) {
+      console.error('Failed to delete agent:', err);
+      alert('Failed to delete agent');
+    }
+  };
+
   if (loading) {
     return (
       <div className={`agents-page ${theme === 'light' ? 'light-mode' : ''}`}>
@@ -101,9 +133,9 @@ export default function AgentsPage() {
     <div className={`agents-page ${theme === 'light' ? 'light-mode' : ''}`}>
       {/* HEADER */}
       <div className="page-header">
-        <h1><Monitor size={32} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 12 }} />Agents Management</h1>
+        <h1><Monitor size={32} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 12 }} />{t('agents.title')}</h1>
         <button className="btn-primary" onClick={fetchAgents}>
-          <RefreshCw size={16} /> Refresh
+          <RefreshCw size={16} /> {t('agents.refresh')}
         </button>
       </div>
 
@@ -112,28 +144,28 @@ export default function AgentsPage() {
       {/* FILTERS */}
       <div className="filters-bar">
         <div className="filter-group">
-          <label>Status:</label>
+          <label>{t('agents.status')}:</label>
           <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-            <option value="all">All ({agents.length})</option>
-            <option value="online">Online ({agents.filter(a => a.is_online).length})</option>
-            <option value="offline">Offline ({agents.filter(a => !a.is_online).length})</option>
+            <option value="all">{t('rules.all')} ({agents.length})</option>
+            <option value="online">{t('agents.online')} ({agents.filter(a => a.is_online).length})</option>
+            <option value="offline">{t('agents.offline')} ({agents.filter(a => !a.is_online).length})</option>
           </select>
         </div>
 
         <div className="filter-group">
-          <label>OS Type:</label>
+          <label>{t('agents.os')}:</label>
           <select value={filterOS} onChange={(e) => setFilterOS(e.target.value)}>
-            <option value="all">All</option>
-            <option value="ubuntu">Ubuntu</option>
-            <option value="windows">Windows</option>
+            <option value="all">{t('agents.allOS')}</option>
+            <option value="ubuntu">{t('rules.ubuntu')}</option>
+            <option value="windows">{t('rules.windows')}</option>
           </select>
         </div>
 
         <div className="filter-group search-group">
-          <label>Search:</label>
+          <label>{t('common.search')}:</label>
           <input
             type="text"
-            placeholder="Search by hostname or IP..."
+            placeholder={t('agents.searchAgents')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -144,15 +176,15 @@ export default function AgentsPage() {
       <div className="agents-stats">
         <div className="stat-box total">
           <div className="stat-value">{agents.length}</div>
-          <div className="stat-label">Total Agents</div>
+          <div className="stat-label">{t('agents.total')}</div>
         </div>
         <div className="stat-box online">
           <div className="stat-value">{agents.filter(a => a.is_online).length}</div>
-          <div className="stat-label">Online</div>
+          <div className="stat-label">{t('agents.online')}</div>
         </div>
         <div className="stat-box offline">
           <div className="stat-value">{agents.filter(a => !a.is_online).length}</div>
-          <div className="stat-label">Offline</div>
+          <div className="stat-label">{t('agents.offline')}</div>
         </div>
         <div className="stat-box avg">
           <div className="stat-value">
@@ -160,7 +192,7 @@ export default function AgentsPage() {
               ? ((agents.reduce((sum, a) => sum + (a.compliance_rate || 0), 0) / agents.length).toFixed(1))
               : 0}%
           </div>
-          <div className="stat-label">Avg Compliance</div>
+          <div className="stat-label">{t('agents.compliance')}</div>
         </div>
       </div>
 
@@ -169,7 +201,7 @@ export default function AgentsPage() {
         {filteredAgents.length === 0 ? (
           <div className="empty-state">
             <Monitor size={48} style={{ opacity: 0.3, marginBottom: 16 }} />
-            <p>No agents found matching your criteria</p>
+            <p>{t('agents.noAgents')}</p>
           </div>
         ) : (
           filteredAgents.map((agent) => (
@@ -229,6 +261,28 @@ export default function AgentsPage() {
                       }}
                     />
                   </div>
+                </div>
+                <div className="agent-actions">
+                  <button
+                    className="action-btn edit-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditModal(agent);
+                    }}
+                    title="Edit Agent"
+                  >
+                    <Edit size={16} />
+                  </button>
+                  <button
+                    className="action-btn delete-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(agent.id);
+                    }}
+                    title="Delete Agent"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               </div>
             </div>
@@ -321,6 +375,15 @@ export default function AgentsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* EDIT AGENT MODAL */}
+      {editModal && (
+        <EditAgentModal
+          agent={editModal}
+          onClose={() => setEditModal(null)}
+          onSave={handleEdit}
+        />
       )}
     </div>
   );

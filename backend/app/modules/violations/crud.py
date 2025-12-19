@@ -209,6 +209,34 @@ def get_recent_violations_count(db: Session, hours: int = 24) -> int:
 
 
 
+def get_7day_trend(db: Session) -> List[dict]:
+    """Get 7-day violation trend (count per day for last 7 days)."""
+    today = datetime.utcnow().date()
+    trend = []
+    
+    for i in range(6, -1, -1):
+        day = today - timedelta(days=i)
+        day_start = datetime.combine(day, datetime.min.time())
+        day_end = datetime.combine(day, datetime.max.time())
+        count = db.query(Violation)\
+            .filter(Violation.detected_at >= day_start, Violation.detected_at <= day_end)\
+            .count()
+        trend.append({
+            "date": day.strftime("%Y-%m-%d"), 
+            "count": count
+        })
+    
+    return trend
+
+
+def get_top_5_recent_violations(db: Session) -> List[Violation]:
+    """Get top 5 most recent violations."""
+    return db.query(Violation)\
+        .order_by(Violation.detected_at.desc())\
+        .limit(5)\
+        .all()
+
+
 def get_violation_stats(db: Session) -> dict:
     """Get comprehensive violation statistics."""
     # Total count
@@ -241,16 +269,8 @@ def get_violation_stats(db: Session) -> dict:
         for agent_id, hostname, count in top_agents
     ]
     
-    # 7-day trend: count violations per day for last 7 days
-    from datetime import datetime, timedelta
-    today = datetime.utcnow().date()
-    trend = []
-    for i in range(6, -1, -1):
-        day = today - timedelta(days=i)
-        day_start = datetime.combine(day, datetime.min.time())
-        day_end = datetime.combine(day, datetime.max.time())
-        count = db.query(Violation).filter(Violation.detected_at >= day_start, Violation.detected_at <= day_end).count()
-        trend.append({"date": day.strftime("%Y-%m-%d"), "count": count})
+    # 7-day trend
+    trend = get_7day_trend(db)
 
     # Return comprehensive stats
     return {

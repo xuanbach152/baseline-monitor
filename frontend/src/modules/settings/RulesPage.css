@@ -1,7 +1,7 @@
 .rules-page {
   padding: 24px;
-  width: 100%;
-  max-width: 100%;
+  width: 1520px;
+  min-width: 100%;
   box-sizing: border-box;
 }
 
@@ -170,27 +170,35 @@
   color: #666;
 }
 
+
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 32px;
-  max-width: 100%;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
-
 .page-header h1 {
   font-size: 2.5rem;
   font-weight: 800;
   color: #fff;
   margin: 0;
+  display: flex;
+  align-items: center;
 }
-
+.page-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+}
 .btn-primary {
   background: linear-gradient(135deg, #ff1744, #ff5252);
   color: #fff;
   border: none;
   padding: 10px 20px;
   border-radius: 8px;
+  margin-left: -2px;
   font-weight: 700;
   font-size: 0.95rem;
   cursor: pointer;
@@ -457,6 +465,47 @@
   align-items: center;
   padding-top: 16px;
   border-top: 2px solid #2a2d35;
+}
+
+.rule-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.action-btn {
+  background: #2a2d35;
+  color: #fff;
+  border: 1px solid #3a3d45;
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn:hover {
+  transform: scale(1.1);
+}
+
+.toggle-btn:hover {
+  background: #4caf50;
+  border-color: #4caf50;
+  color: #fff;
+}
+
+.edit-btn:hover {
+  background: #2196f3;
+  border-color: #2196f3;
+  color: #fff;
+}
+
+.delete-btn:hover {
+  background: #f44336;
+  border-color: #f44336;
+  color: #fff;
 }
 
 .status-indicator {

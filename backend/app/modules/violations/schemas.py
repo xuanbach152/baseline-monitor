@@ -47,12 +47,18 @@ class ViolationUpdate(BaseModel):
         le=1.0,
         description="Update độ tin cậy"
     )
+    resolved_at: Optional[datetime] = Field(None, description="Thời gian resolved")
+    resolved_by: Optional[str] = Field(None, description="User đã resolve")
+    resolution_notes: Optional[str] = Field(None, description="Ghi chú khi resolve")
     
 
 class ViolationResponse(ViolationBase):
     """Schema for violation response."""
     id: int = Field(..., description="Violation ID")
     detected_at: datetime = Field(..., description="Thời điểm phát hiện violation")
+    resolved_at: Optional[datetime] = Field(None, description="Thời gian resolved")
+    resolved_by: Optional[str] = Field(None, description="User đã resolve")
+    resolution_notes: Optional[str] = Field(None, description="Ghi chú khi resolve")
     
     class Config:
         from_attributes = True 
@@ -61,6 +67,9 @@ class ViolationWithDetail(ViolationBase):
     """Schema for violation detail"""
     id: int = Field(..., description="Violation ID")
     detected_at: datetime = Field(..., description="Thời điểm phát hiện violation")
+    resolved_at: Optional[datetime] = Field(None, description="Thời gian resolved")
+    resolved_by: Optional[str] = Field(None, description="User đã resolve")
+    resolution_notes: Optional[str] = Field(None, description="Ghi chú khi resolve")
     agent: Optional[dict] = Field(
         None,
         description="Nested agent details: {id, hostname, ip_address, os, is_online}"

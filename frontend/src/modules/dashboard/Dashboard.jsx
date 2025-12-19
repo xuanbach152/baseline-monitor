@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import "./Dashboard.css";
 import axios from "axios";
+import { useTranslation } from 'react-i18next';
 import { 
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, 
   CartesianGrid, PieChart, Pie, Cell, Legend, BarChart, Bar 
@@ -14,9 +15,12 @@ import {
   RefreshCw,
   Sun,
   Moon,
-  Activity
+  Activity,
+  Wifi
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { useWebSocket } from '../../hooks/useWebSocket';
+import Toast from '../../components/Toast';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -33,6 +37,7 @@ const StatCard = ({ title, value, subvalue, IconComponent, color }) => (
  
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const [agentStats, setAgentStats] = useState({ total: 0, online: 0, offline: 0 });
   const [violationStats, setViolationStats] = useState({ total: 0, by_severity: {}, trend: [], top_5_agents: [] });
   const [ruleStats, setRuleStats] = useState({ total: 0, active: 0 });
@@ -42,30 +47,70 @@ export default function Dashboard() {
   const { theme } = useTheme();
   const [recentViolations, setRecentViolations] = useState([]);
   const [agentList, setAgentList] = useState([]);
+  const [toastMessage, setToastMessage] = useState(null);
+  
+  // Fetch agents
+  const fetchAgents = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/agents?limit=1000`);
+      setAgentList(res.data || []);
+    } catch (err) {
+      setAgentList([]);
+    }
+  };
+  
+  // Fetch recent violations
+  const fetchRecentViolations = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/violations/recent?limit=5&hours=168`);
+      setRecentViolations(res.data || []);
+    } catch (err) {
+      setRecentViolations([]);
+    }
+  };
+  
+  // WebSocket connection with real-time updates
+  const { isConnected } = useWebSocket({
+    onViolationCreated: (data) => {
+      // Refresh stats when new violation is created
+      fetchAllStats();
+      fetchRecentViolations();
+      
+      // Show toast notification for critical violations
+      if (data.confidence_score && data.confidence_score > 0.8) {
+        setToastMessage({
+          message: `Critical violation detected: ${data.message || 'New security issue'}`,
+          type: 'error'
+        });
+      }
+    },
+    onViolationResolved: () => {
+      // Refresh stats when violation is resolved
+      fetchAllStats();
+      fetchRecentViolations();
+    },
+    onViolationDeleted: () => {
+      // Refresh stats when violation is deleted
+      fetchAllStats();
+      fetchRecentViolations();
+    },
+    onAgentUpdated: () => {
+      // Refresh agent stats
+      fetchAgents();
+      fetchAllStats();
+    },
+    onAgentDeleted: () => {
+      // Refresh agent stats
+      fetchAgents();
+      fetchAllStats();
+    }
+  });
   
   useEffect(() => {
-    async function fetchAgents() {
-      try {
-        const res = await axios.get(`${API_URL}/agents?limit=1000`);
-        setAgentList(res.data || []);
-      } catch (err) {
-        setAgentList([]);
-      }
-    }
     fetchAgents();
   }, []);
       
-
-  // Fetch recent violations
   useEffect(() => {
-    async function fetchRecentViolations() {
-      try {
-        const res = await axios.get(`${API_URL}/violations/recent?limit=5&hours=24`);
-        setRecentViolations(res.data || []);
-      } catch (err) {
-        setRecentViolations([]);
-      }
-    }
     fetchRecentViolations();
   }, []);
 
@@ -118,11 +163,30 @@ export default function Dashboard() {
       }}>
         <h2 style={{ color: theme === 'light' ? '#23272b' : '#fdfdfdff', fontSize: '2rem', letterSpacing: 1, fontWeight: 800, textTransform: 'uppercase', margin: 0 }}>
           <Activity style={{ display: 'inline', marginRight: 8, color: theme === 'light' ? '#e80c26ff' : '#0cbb69ff', verticalAlign: 'middle' }} size={32} />
-          Agent Monitoring Dashboard
+          {t('dashboard.title')}
         </h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          {/* WebSocket Connection Indicator */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '6px 12px',
+            borderRadius: '20px',
+            background: isConnected 
+              ? 'rgba(79, 209, 197, 0.15)' 
+              : 'rgba(176, 179, 184, 0.15)',
+            border: `2px solid ${isConnected ? '#4fd1c5' : '#b0b3b8'}`,
+            fontSize: '0.85rem',
+            fontWeight: 600,
+            color: isConnected ? '#4fd1c5' : '#b0b3b8'
+          }}>
+            <Wifi size={14} />
+            {isConnected ? 'Live' : 'Offline'}
+          </div>
+          
           <button className="btn-primary" onClick={fetchAllStats}>
-            <RefreshCw size={16} /> Refresh
+            <RefreshCw size={16} /> {t('common.refresh')}
           </button>
           {lastUpdated && (
             <span style={{ 
@@ -133,7 +197,7 @@ export default function Dashboard() {
               alignItems: 'center',
               gap: 6
             }}>
-              Last updated: {lastUpdated.toLocaleString('en-GB', { 
+              {t('dashboard.lastUpdated')}: {lastUpdated.toLocaleString('en-GB', { 
                 day: '2-digit', 
                 month: '2-digit', 
                 year: 'numeric', 
@@ -167,15 +231,15 @@ export default function Dashboard() {
         {/* Stat cards: top left */}
         <div style={{ gridArea: 'statcards', display: 'flex', flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
           <StatCard
-            title="Agents"
+            title={t('agents.title')}
             value={loading ? "..." : agentStats.total}
-            subvalue={loading ? "" : `Online: ${agentStats.online} | Offline: ${agentStats.offline}`}
+            subvalue={loading ? "" : `${t('agents.online')}: ${agentStats.online} | ${t('agents.offline')}: ${agentStats.offline}`}
             IconComponent={Monitor}
             color="#4fd1c5"
             style={{ minWidth: 145, minHeight: 150, padding: '0px 0px 0px 0px', fontSize: '1rem' }}
           />
           <StatCard
-            title="Violations"
+            title={t('violations.title')}
             value={loading ? "..." : violationStats.total}
             subvalue={
               loading
@@ -191,9 +255,9 @@ export default function Dashboard() {
             style={{ minWidth: 145, minHeight: 150, padding: '0px 0px 0px 0px', fontSize: '1rem' }}
           />
           <StatCard
-            title="Rules"
+            title={t('rules.title')}
             value={loading ? "..." : ruleStats.total}
-            subvalue={loading ? "" : `Active: ${ruleStats.active}`}
+            subvalue={loading ? "" : `${t('dashboard.activeRules')}: ${ruleStats.active}`}
             IconComponent={FileText}
             color="#63b3ed"
             style={{ minWidth: 145, minHeight: 150, padding: '0px 0px 0px 0px', fontSize: '1rem' }}
@@ -202,7 +266,7 @@ export default function Dashboard() {
         {/* Pie chart: top right */}
         <div style={{ gridArea: 'piechart', minWidth: 300,maxWidth: 600, minHeight: 260, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
           <div className="chart-container" style={{ borderRadius: 18, padding: 24, boxShadow: '0 2px 16px #ffd60033', border: '2px solid #ffd600', background: theme === 'light' ? '#fff' : '#23272b', width: '100%' }}>
-            <h3 style={{ color: theme === 'light' ? '#23272b' : '#fff', marginBottom: 16, fontWeight: 700, fontSize: "1.12rem", letterSpacing: 0.5 }}>Violations Breakdown by Severity</h3>
+            <h3 style={{ color: theme === 'light' ? '#23272b' : '#fff', marginBottom: 16, fontWeight: 700, fontSize: "1.12rem", letterSpacing: 0.5 }}>{t('violations.title')} - {t('violations.severity')}</h3>
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
                 <Pie
@@ -234,10 +298,10 @@ export default function Dashboard() {
         {/* Agent status: below pie chart */}
         <div style={{ gridArea: 'agentstatus', minWidth: 200,maxWidth: 380, minHeight: 200 }}>
           <div className="agent-status-list" style={{ borderRadius: 18, padding: 18, boxShadow: '0 2px 16px #31343a22', border: '2px solid #31343a', background: theme === 'light' ? '#fff' : '#23272b', minHeight: 100 }}>
-            <h3 style={{ color: theme === 'light' ? '#23272b' : '#fff', marginBottom: 12, fontWeight: 700, fontSize: "1.08rem", letterSpacing: 0.5 }}>Agent Status</h3>
+            <h3 style={{ color: theme === 'light' ? '#23272b' : '#fff', marginBottom: 12, fontWeight: 700, fontSize: "1.08rem", letterSpacing: 0.5 }}>{t('agents.status')}</h3>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
               {agentList.length === 0 ? (
-                <li style={{ color: theme === 'light' ? '#23272b' : '#bfc7d5', textAlign: 'center', padding: 12 }}>Không có agent nào.</li>
+                <li style={{ color: theme === 'light' ? '#23272b' : '#bfc7d5', textAlign: 'center', padding: 12 }}>{t('agents.noAgents')}</li>
               ) : agentList.map(agent => (
                 <li key={agent.id} style={{ display: 'flex', alignItems: 'center', marginBottom: 0 }}>
                   <span style={{
@@ -251,7 +315,7 @@ export default function Dashboard() {
                     boxShadow: agent.is_online ? '0 0 8px #4fd1c5aa' : '0 0 8px #ff1744aa'
                   }} />
                   <span style={{ color: theme === 'light' ? '#23272b' : '#fff', fontWeight: 500 }}>{agent.hostname && agent.hostname.length > 18 ? agent.hostname.slice(0, 15) + '...' : agent.hostname}</span>
-                  <span style={{ color: agent.is_online ? '#4fd1c5' : '#ff1744', marginLeft: 'auto', fontWeight: 700, fontSize: '0.98em', textShadow: agent.is_online ? '0 0 6px #4fd1c555' : '0 0 6px #ff174455' }}>{agent.is_online ? 'Online' : 'Offline'}</span>
+                  <span style={{ color: agent.is_online ? '#4fd1c5' : '#ff1744', marginLeft: 'auto', fontWeight: 700, fontSize: '0.98em', textShadow: agent.is_online ? '0 0 6px #4fd1c555' : '0 0 6px #ff174455' }}>{agent.is_online ? t('agents.online') : t('agents.offline')}</span>
                 </li>
               ))}
             </ul>
@@ -260,7 +324,7 @@ export default function Dashboard() {
         {/* Line chart: below stat cards */}
         <div style={{ gridArea: 'trendchart', minWidth: 320,maxWidth:750, minHeight: 150,marginTop: -360 }}>
           <div className="chart-container" style={{ borderRadius: 18, padding: 18, boxShadow: '0 2px 16px #ff174422', border: '2px solid #ff1744', background: theme === 'light' ? '#fff' : '#23272b' }}>
-            <h3 style={{ color: theme === 'light' ? '#23272b' : '#fff', marginBottom: 12, fontWeight: 700, fontSize: "1.08rem", letterSpacing: 0.5 }}>Violations - 7 Day Trend</h3>
+            <h3 style={{ color: theme === 'light' ? '#23272b' : '#fff', marginBottom: 12, fontWeight: 700, fontSize: "1.08rem", letterSpacing: 0.5 }}>{t('dashboard.complianceTrend')}</h3>
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={violationStats.trend && violationStats.trend.length > 0 ? violationStats.trend : [{ date: '', count: 0 }]}
                 margin={{ top: 8, right: 24, left: 0, bottom: 8 }}>
@@ -275,7 +339,7 @@ export default function Dashboard() {
             </ResponsiveContainer>
             {(!violationStats.trend || violationStats.trend.length === 0) && (
               <div style={{ color: theme === 'light' ? '#23272b' : '#bfc7d5', textAlign: 'center', marginTop: 8, fontSize: '1.02rem' }}>
-                Không có dữ liệu để hiển thị biểu đồ.
+                {t('dashboard.noRecentViolations')}
               </div>
             )}
           </div>
@@ -283,7 +347,7 @@ export default function Dashboard() {
         {/* Bar Chart: Top 5 agents with most violations */}
         <div style={{ gridArea: 'top5chart', minWidth: 320,maxWidth:750, minHeight: 150 }}>
             <div className="chart-container" style={{ borderRadius: 18, padding: 18, boxShadow: '0 2px 16px #4fd1c533', border: '2px solid #4fd1c5', background: theme === 'light' ? '#fff' : '#23272b', minHeight: 120 }}>
-              <h3 style={{ color: theme === 'light' ? '#23272b' : '#fff', marginBottom: 12, fontWeight: 700, fontSize: '1.08rem', letterSpacing: 0.5 }}>Top 5 Agents with Most Violations</h3>
+              <h3 style={{ color: theme === 'light' ? '#23272b' : '#fff', marginBottom: 12, fontWeight: 700, fontSize: '1.08rem', letterSpacing: 0.5 }}>{t('dashboard.topAgents')}</h3>
               <ResponsiveContainer width="100%" height={100}>
                 <BarChart
                   data={violationStats.top_5_agents && violationStats.top_5_agents.length > 0 ? violationStats.top_5_agents : [{ hostname: '', violation_count: 0 }]}
@@ -305,7 +369,7 @@ export default function Dashboard() {
                           color: theme === 'light' ? '#23272b' : '#fff'
                         }}>
                           <p>{payload[0].payload.hostname}</p>
-                          <p>Vi phạm: {payload[0].value}</p>
+                          <p>{t('violations.violations')}: {payload[0].value}</p>
                         </div>
                       );
                     }}
@@ -322,7 +386,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
               {(!violationStats.top_5_agents || violationStats.top_5_agents.length === 0) && (
                 <div style={{ color: theme === 'light' ? '#23272b' : '#bfc7d5', textAlign: 'center', marginTop: 8, fontSize: '1.02rem' }}>
-                  Không có dữ liệu để hiển thị biểu đồ.
+                  {t('dashboard.noRecentViolations')}
                 </div>
               )}
             </div>
@@ -330,20 +394,20 @@ export default function Dashboard() {
         {/* Table: 5 most recent violations */}
         <div style={{ gridArea: 'barandtable', minWidth: 320, minHeight: 120 }}>
             <div style={{ borderRadius: 18, padding: 18, boxShadow: '0 2px 16px #f5656533', border: '2px solid #f56565', background: theme === 'light' ? '#fff' : '#23272b', minHeight: 120 }}>
-              <h3 style={{ color: theme === 'light' ? '#23272b' : '#fff', marginBottom: 12, fontWeight: 700, fontSize: '1.08rem', letterSpacing: 0.5 }}>5 Most Recent Violations</h3>
+              <h3 style={{ color: theme === 'light' ? '#23272b' : '#fff', marginBottom: 12, fontWeight: 700, fontSize: '1.08rem', letterSpacing: 0.5 }}>{t('dashboard.recentViolations')}</h3>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', color: theme === 'light' ? '#23272b' : '#f2f3f7', fontSize: '0.98rem' }}>
                   <thead>
                     <tr style={{ background: '#eb5252ff', color: theme === 'light' ? '#000000ff' : '#f4f3f2ff', fontWeight: 700 }}>
-                      <th style={{ padding: '6px 8px', textAlign: 'left' }}>Time</th>
-                      <th style={{ padding: '6px 8px', textAlign: 'left' }}>Agent</th>
-                      <th style={{ padding: '6px 8px', textAlign: 'left' }}>Rule</th>
-                      <th style={{ padding: '6px 8px', textAlign: 'left' }}>Message</th>
+                      <th style={{ padding: '6px 8px', textAlign: 'left' }}>{t('violations.time')}</th>
+                      <th style={{ padding: '6px 8px', textAlign: 'left' }}>{t('violations.agent')}</th>
+                      <th style={{ padding: '6px 8px', textAlign: 'left' }}>{t('violations.rule')}</th>
+                      <th style={{ padding: '6px 8px', textAlign: 'left' }}>{t('violations.message')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {recentViolations.length === 0 ? (
-                      <tr><td colSpan={5} style={{ color: theme === 'light' ? '#23272b' : '#bfc7d5', textAlign: 'center', padding: 12 }}>Không có dữ liệu.</td></tr>
+                      <tr><td colSpan={5} style={{ color: theme === 'light' ? '#23272b' : '#bfc7d5', textAlign: 'center', padding: 12 }}>{t('dashboard.noRecentViolations')}</td></tr>
                     ) : recentViolations.map((v, idx) => (
                       <tr key={v.id || idx} style={{ borderBottom: '1.5px solid #333' }}>
                         <td style={{ padding: '6px 8px', color: theme === 'light' ? '#23272b' : '#bfc7d5' }}>{v.detected_at ? new Date(v.detected_at).toLocaleString() : ''}</td>
@@ -358,6 +422,15 @@ export default function Dashboard() {
             </div>
         </div>
       </div>
+      
+      {/* Toast Notifications */}
+      {toastMessage && (
+        <Toast
+          message={toastMessage.message}
+          type={toastMessage.type}
+          onClose={() => setToastMessage(null)}
+        />
+      )}
     </div>
   );
 }

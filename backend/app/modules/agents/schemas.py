@@ -35,6 +35,9 @@ class AgentResponse(AgentBase):
     id: int
     is_online: bool
     last_checkin: datetime
+    compliance_rate: Optional[float] = None
+    last_scan_at: Optional[datetime] = None
+    last_heartbeat: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 

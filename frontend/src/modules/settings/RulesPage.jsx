@@ -13,18 +13,27 @@ import {
   Server,
   Laptop,
   Eye,
-  Folder
+  Folder,
+  Edit,
+  Trash2,
+  Plus
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
+import EditRuleModal from './EditRuleModal';
+import CreateRuleModal from './CreateRuleModal';
 import './RulesPage.css';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default function RulesPage() {
+  const { t } = useTranslation();
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedRule, setSelectedRule] = useState(null);
+  const [editModal, setEditModal] = useState(null);
+  const [createModal, setCreateModal] = useState(false);
   const { theme } = useTheme();
 
   // Filters
@@ -69,6 +78,53 @@ export default function RulesPage() {
     if (sev === 'medium') return <Clock {...iconProps} />;
     if (sev === 'low') return <Shield {...iconProps} />;
     return <Activity {...iconProps} />;
+  };
+
+  const handleEdit = async (ruleId, data) => {
+    try {
+      await axios.put(`${API_URL}/rules/${ruleId}`, data);
+      await fetchRules();
+      setEditModal(null);
+    } catch (err) {
+      console.error('Failed to update rule:', err);
+      throw err;
+    }
+  };
+
+  const handleCreate = async (data) => {
+    try {
+      await axios.post(`${API_URL}/rules`, data);
+      await fetchRules();
+      setCreateModal(false);
+    } catch (err) {
+      console.error('Failed to create rule:', err);
+      throw err;
+    }
+  };
+
+  const handleDelete = async (ruleId) => {
+    if (!window.confirm('Are you sure you want to delete this rule? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      await axios.delete(`${API_URL}/rules/${ruleId}`);
+      await fetchRules();
+      setSelectedRule(null);
+    } catch (err) {
+      console.error('Failed to delete rule:', err);
+      alert('Failed to delete rule');
+    }
+  };
+
+  const handleToggleActive = async (ruleId) => {
+    try {
+      await axios.patch(`${API_URL}/rules/${ruleId}/toggle`);
+      await fetchRules();
+    } catch (err) {
+      console.error('Failed to toggle rule:', err);
+      alert('Failed to toggle rule status');
+    }
   };
 
   // Get unique categories
@@ -133,11 +189,22 @@ export default function RulesPage() {
   return (
     <div className={`rules-page ${theme === 'light' ? 'light-mode' : ''}`}>
       {/* HEADER */}
-      <div className="page-header">
-        <h1><FileText size={32} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 12 }} />CIS Rules</h1>
-        <button className="btn-primary" onClick={fetchRules}>
-          <RefreshCw size={16} /> Refresh
-        </button>
+        <div className="page-header">
+              <h1 className="page-title">
+                <FileText size={32} /> {t('rules.title')}
+              </h1>
+
+        <div className="page-actions">
+          <button className="btn-primary" onClick={() => setCreateModal(true)}>
+            <Plus size={16} />
+            {t('rules.addRule')}
+          </button>
+
+          <button className="btn-primary" onClick={fetchRules}>
+            <RefreshCw size={16} />
+            {t('rules.refresh')}
+          </button>
+        </div>
       </div>
 
       {error && <div className="error-message">{error}</div>}
@@ -146,52 +213,52 @@ export default function RulesPage() {
       <div className="rules-stats">
         <div className="stat-box">
           <div className="stat-value">{stats.total}</div>
-          <div className="stat-label">Total Rules</div>
+          <div className="stat-label">{t('rules.totalRules')}</div>
         </div>
         <div className="stat-box active">
           <div className="stat-value">{stats.active}</div>
-          <div className="stat-label">Active</div>
+          <div className="stat-label">{t('rules.active')}</div>
         </div>
         <div className="stat-box inactive">
           <div className="stat-value">{stats.inactive}</div>
-          <div className="stat-label">Inactive</div>
+          <div className="stat-label">{t('rules.inactive')}</div>
         </div>
         <div className="stat-box ubuntu">
           <div className="stat-value"><Server size={20} /> {stats.ubuntu}</div>
-          <div className="stat-label">Ubuntu</div>
+          <div className="stat-label">{t('rules.ubuntu')}</div>
         </div>
         <div className="stat-box windows">
           <div className="stat-value"><Laptop size={20} /> {stats.windows}</div>
-          <div className="stat-label">Windows</div>
+          <div className="stat-label">{t('rules.windows')}</div>
         </div>
       </div>
 
       {/* FILTERS */}
       <div className="filters-bar">
         <div className="filter-group">
-          <label>OS Type:</label>
+          <label>{t('rules.osType')}:</label>
           <select value={filterOS} onChange={(e) => setFilterOS(e.target.value)}>
-            <option value="all">All ({rules.length})</option>
-            <option value="ubuntu">Ubuntu ({stats.ubuntu})</option>
-            <option value="windows">Windows ({stats.windows})</option>
+            <option value="all">{t('rules.all')} ({rules.length})</option>
+            <option value="ubuntu">{t('rules.ubuntu')} ({stats.ubuntu})</option>
+            <option value="windows">{t('rules.windows')} ({stats.windows})</option>
           </select>
         </div>
 
         <div className="filter-group">
-          <label>Severity:</label>
+          <label>{t('rules.severity')}:</label>
           <select value={filterSeverity} onChange={(e) => setFilterSeverity(e.target.value)}>
-            <option value="all">All</option>
-            <option value="critical">Critical ({stats.bySeverity.critical})</option>
-            <option value="high">High ({stats.bySeverity.high})</option>
-            <option value="medium">Medium ({stats.bySeverity.medium})</option>
-            <option value="low">Low ({stats.bySeverity.low})</option>
+            <option value="all">{t('rules.all')}</option>
+            <option value="critical">{t('common.critical')} ({stats.bySeverity.critical})</option>
+            <option value="high">{t('common.high')} ({stats.bySeverity.high})</option>
+            <option value="medium">{t('common.medium')} ({stats.bySeverity.medium})</option>
+            <option value="low">{t('common.low')} ({stats.bySeverity.low})</option>
           </select>
         </div>
 
         <div className="filter-group">
-          <label>Category:</label>
+          <label>{t('rules.category')}:</label>
           <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
-            <option value="all">All Categories</option>
+            <option value="all">{t('rules.allCategories')}</option>
             {categories.map(cat => (
               <option key={cat} value={cat}>{cat}</option>
             ))}
@@ -199,19 +266,19 @@ export default function RulesPage() {
         </div>
 
         <div className="filter-group">
-          <label>Status:</label>
+          <label>{t('rules.status')}:</label>
           <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-            <option value="all">All</option>
-            <option value="active">Active ({stats.active})</option>
-            <option value="inactive">Inactive ({stats.inactive})</option>
+            <option value="all">{t('rules.all')}</option>
+            <option value="active">{t('rules.active')} ({stats.active})</option>
+            <option value="inactive">{t('rules.inactive')} ({stats.inactive})</option>
           </select>
         </div>
 
         <div className="filter-group search-group">
-          <label>Search:</label>
+          <label>{t('common.search')}:</label>
           <input
             type="text"
-            placeholder="Search rules..."
+            placeholder={t('rules.searchRules')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -222,7 +289,7 @@ export default function RulesPage() {
       <div className="rules-grid">
         {filteredRules.length === 0 ? (
           <div className="empty-state">
-            <p> No rules found matching your criteria</p>
+            <p>{t('rules.noRules')}</p>
           </div>
         ) : (
           filteredRules.map((rule) => (
@@ -267,7 +334,38 @@ export default function RulesPage() {
                 <span className={`status-indicator ${rule.active !== false ? 'active' : 'inactive'}`}>
                   {rule.active !== false ? <><CheckCircle size={14} /> Active</> : <><XOctagon size={14} /> Inactive</>}
                 </span>
-                <button className="btn-view-details"><Eye size={16} /> View Details</button>
+                <div className="rule-actions">
+                  <button
+                    className="action-btn toggle-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleActive(rule.id);
+                    }}
+                    title={rule.active !== false ? 'Deactivate' : 'Activate'}
+                  >
+                    {rule.active !== false ? <XOctagon size={16} /> : <CheckCircle size={16} />}
+                  </button>
+                  <button
+                    className="action-btn edit-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditModal(rule);
+                    }}
+                    title="Edit Rule"
+                  >
+                    <Edit size={16} />
+                  </button>
+                  <button
+                    className="action-btn delete-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(rule.id);
+                    }}
+                    title="Delete Rule"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
             </div>
           ))
@@ -364,6 +462,23 @@ export default function RulesPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* EDIT RULE MODAL */}
+      {editModal && (
+        <EditRuleModal
+          rule={editModal}
+          onClose={() => setEditModal(null)}
+          onSave={handleEdit}
+        />
+      )}
+
+      {/* CREATE RULE MODAL */}
+      {createModal && (
+        <CreateRuleModal
+          onClose={() => setCreateModal(false)}
+          onCreate={handleCreate}
+        />
       )}
     </div>
   );

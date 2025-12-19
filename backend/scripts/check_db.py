@@ -16,8 +16,8 @@ from app.db.database import engine, DATABASE_URL
 
 def check_database():
     """Kiểm tra kết nối database."""
-    print("🔍 Checking database connection...")
-    print(f"📍 Database URL: {DATABASE_URL}")
+    print(" Checking database connection...")
+    print(f" Database URL: {DATABASE_URL}")
     
     try:
         with engine.connect() as conn:
@@ -25,15 +25,15 @@ def check_database():
             if "postgresql" in DATABASE_URL.lower():
                 result = conn.execute(text("SELECT version();"))
                 version = result.fetchone()[0]
-                print(f"✅ Connected to PostgreSQL")
-                print(f"📦 Version: {version.split(',')[0]}")
+                print(f" Connected to PostgreSQL")
+                print(f" Version: {version.split(',')[0]}")
             elif "sqlite" in DATABASE_URL.lower():
                 result = conn.execute(text("SELECT sqlite_version();"))
                 version = result.fetchone()[0]
-                print(f"✅ Connected to SQLite")
-                print(f"📦 Version: {version}")
+                print(f" Connected to SQLite")
+                print(f"Version: {version}")
             else:
-                print(f"✅ Connected to database")
+                print(f" Connected to database")
             
             # Kiểm tra tables
             if "postgresql" in DATABASE_URL.lower():
@@ -47,13 +47,13 @@ def check_database():
                 ))
             
             table_count = result.fetchone()[0]
-            print(f"📊 Tables in database: {table_count}")
+            print(f" Tables in database: {table_count}")
             
-            print("\n✅ Database check passed!")
+            print("\n Database check passed!")
             return True
             
     except Exception as e:
-        print(f"\n❌ Database connection failed!")
+        print(f"\n Database connection failed!")
         print(f"Error: {str(e)}")
         return False
 

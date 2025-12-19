@@ -6,14 +6,17 @@ import {
     Home, 
   AlertTriangle, 
   FileText, 
-  Settings, 
+  Settings,
+  FileBarChart,
   Sun,
   Moon
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import './Layout.css';
 
 export default function Layout({ children }) {
+  const { t } = useTranslation();
   const location = useLocation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { theme, toggleTheme } = useTheme();
@@ -21,11 +24,12 @@ export default function Layout({ children }) {
   const isActive = (path) => location.pathname === path;
 
   const navItems = [
-    { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/agents', icon: Monitor, label: 'Agents' },
-    { path: '/violations', icon: AlertTriangle, label: 'Violations' },
-    { path: '/rules', icon: FileText, label: 'Rules' },
-    { path: '/settings', icon: Settings, label: 'Settings' },
+    { path: '/', icon: LayoutDashboard, label: t('nav.dashboard') },
+    { path: '/agents', icon: Monitor, label: t('nav.agents') },
+    { path: '/violations', icon: AlertTriangle, label: t('nav.violations') },
+    { path: '/rules', icon: FileText, label: t('nav.rules') },
+    { path: '/reports', icon: FileBarChart, label: t('nav.reports') },
+    { path: '/settings', icon: Settings, label: t('nav.settings') },
   ];
 
   return (
@@ -65,14 +69,14 @@ export default function Layout({ children }) {
           <button
             className="theme-toggle"
             onClick={toggleTheme}
-            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            title={theme === 'dark' ? t('common.lightMode') : t('common.darkMode')}
             style={{
               background: theme === 'dark' ? '#f6f6f6ff' : '#040404ff',
               color: theme === 'dark' ? '#050505ff' : '#fefefeff',
             }}
           >
             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            {!sidebarCollapsed && <span>{theme === 'dark' ? 'Light' : 'Dark'} Mode</span>}
+            {!sidebarCollapsed && <span>{theme === 'dark' ? t('common.lightMode') : t('common.darkMode')}</span>}
           </button>
         </div>
       </aside>
