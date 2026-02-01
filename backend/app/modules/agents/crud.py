@@ -2,7 +2,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import HTTPException, status
 
 from .models import Agent
@@ -111,7 +111,7 @@ def update_agent_heartbeat(
     """Update agent heartbeat/keep-alive. Raises 404 if not found."""
     db_agent = get_agent(db, agent_id)  # ← Auto raise 404
     
-    db_agent.last_checkin = datetime.now()
+    db_agent.last_checkin = datetime.now(timezone.utc)
     db_agent.is_online = heartbeat.is_online
     
     if heartbeat.version:

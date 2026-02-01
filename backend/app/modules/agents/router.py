@@ -18,8 +18,9 @@ def register_agent(agent: AgentCreate, db: Session = Depends(get_db)):
     """
     return crud.create_agent(db, agent)
 
+
 @router.get("/", response_model=List[AgentResponse])
-def list_agents(
+async def list_agents(
     skip: int = 0,
     limit: int = 100,
     is_online: Optional[bool] = None,
@@ -28,15 +29,23 @@ def list_agents(
 ):
     """
     Get list of agents with optional filters.
+    Also marks stale agents as offline (no heartbeat for 90s) before returning list.
     """
+    # Mark stale agents as offline
+    from .utils import mark_stale_agents_offline
+    await mark_stale_agents_offline(db, timeout_minutes=1.5)
+    
     return crud.get_agents(db, skip=skip, limit=limit, is_online=is_online, os=os)
 
 @router.get("/stats")
-def get_agents_stats(db: Session = Depends(get_db)):
+async def get_agents_stats(db: Session = Depends(get_db)):
     """
     Get agent statistics.
-    
+    Also marks stale agents as offline (no heartbeat for 90s).
     """
+    from .utils import mark_stale_agents_offline
+    await mark_stale_agents_offline(db, timeout_minutes=1.5)
+    
     return {
         "total": crud.get_total_agents_count(db),
         "online": crud.get_online_agents_count(db),
@@ -101,7 +110,7 @@ async def delete_agent(agent_id: int, db: Session = Depends(get_db)):
     """
     crud.delete_agent(db, agent_id)
     
-    # Broadcast deletion
+    
     await manager.broadcast_agent_deleted(str(agent_id))
     
     return {
