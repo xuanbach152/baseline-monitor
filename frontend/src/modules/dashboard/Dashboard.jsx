@@ -49,34 +49,55 @@ export default function Dashboard() {
   const [agentList, setAgentList] = useState([]);
   const [toastMessage, setToastMessage] = useState(null);
   
-  // Fetch agents
-  const fetchAgents = async () => {
+  // Fetch all data in one function
+  const fetchAllStats = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const res = await axios.get(`${API_URL}/agents?limit=1000`);
-      setAgentList(res.data || []);
+      // Parallel fetch all endpoints (including separate 7-day trend endpoint)
+      const [agentStatsRes, agentListRes, violationStatsRes, trendRes, ruleListRes, recentViolationsRes] = await Promise.all([
+        axios.get(`${API_URL}/agents/stats`),
+        axios.get(`${API_URL}/agents?limit=1000`),
+        axios.get(`${API_URL}/violations/stats`),
+        axios.get(`${API_URL}/violations/stats/7day-trend`),
+        axios.get(`${API_URL}/rules`),
+        axios.get(`${API_URL}/violations/recent?limit=5&hours=168`)
+      ]);
+
+      // Update all states
+      setAgentStats(agentStatsRes.data);
+      setAgentList(agentListRes.data || []);
+      setRecentViolations(recentViolationsRes.data || []);
+
+      // Violations stats with separate trend data from dedicated endpoint
+      setViolationStats({
+        total: violationStatsRes.data.total_violations || 0,
+        by_severity: violationStatsRes.data.by_severity || {},
+        trend: trendRes.data || [],
+        top_5_agents: violationStatsRes.data.top_5_agents || [],
+      });
+
+      // Rules stats
+      const rules = ruleListRes.data || [];
+      setRuleStats({
+        total: rules.length,
+        active: rules.filter(r => r.active !== false).length,
+      });
+
+      setLastUpdated(new Date());
     } catch (err) {
-      setAgentList([]);
+      console.error('Error fetching dashboard data:', err);
+      setError("Không thể tải dữ liệu dashboard");
+    } finally {
+      setLoading(false);
     }
   };
   
-  // Fetch recent violations
-  const fetchRecentViolations = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/violations/recent?limit=5&hours=168`);
-      setRecentViolations(res.data || []);
-    } catch (err) {
-      setRecentViolations([]);
-    }
-  };
-  
-  // WebSocket connection with real-time updates
   const { isConnected } = useWebSocket({
     onViolationCreated: (data) => {
-      // Refresh stats when new violation is created
+      // Refresh all stats when new violation created
       fetchAllStats();
-      fetchRecentViolations();
       
-      // Show toast notification for critical violations
       if (data.confidence_score && data.confidence_score > 0.8) {
         setToastMessage({
           message: `Critical violation detected: ${data.message || 'New security issue'}`,
@@ -85,67 +106,33 @@ export default function Dashboard() {
       }
     },
     onViolationResolved: () => {
-      // Refresh stats when violation is resolved
+      // Refresh all stats when violation resolved
       fetchAllStats();
-      fetchRecentViolations();
     },
     onViolationDeleted: () => {
-      // Refresh stats when violation is deleted
+      // Refresh all stats when violation deleted
       fetchAllStats();
-      fetchRecentViolations();
     },
     onAgentUpdated: () => {
-      // Refresh agent stats
-      fetchAgents();
+      // Refresh all stats when agent updated
       fetchAllStats();
     },
+    onAgentStatusChanged: (data) => {
+      // Refresh all stats when agent status changed
+      fetchAllStats();
+      
+      if (!data.is_online) {
+        setToastMessage({
+          message: `Agent ${data.hostname} went offline`,
+          type: 'warning'
+        });
+      }
+    },
     onAgentDeleted: () => {
-      // Refresh agent stats
-      fetchAgents();
+      // Refresh all stats when agent deleted
       fetchAllStats();
     }
   });
-  
-  useEffect(() => {
-    fetchAgents();
-  }, []);
-      
-  useEffect(() => {
-    fetchRecentViolations();
-  }, []);
-
-  // Fetch all dashboard data
-  const fetchAllStats = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      // Agents
-      const agentRes = await axios.get(`${API_URL}/agents/stats`);
-      setAgentStats(agentRes.data);
-
-      // Violations
-      const vioRes = await axios.get(`${API_URL}/violations/stats`);
-      setViolationStats({
-        total: vioRes.data.total_violations || 0,
-        by_severity: vioRes.data.by_severity || {},
-        trend: vioRes.data.trend || [],
-        top_5_agents: vioRes.data.top_5_agents || [],
-      });
-
-      // Rules
-      const ruleRes = await axios.get(`${API_URL}/rules`);
-      const rules = ruleRes.data || [];
-      setRuleStats({
-        total: rules.length,
-        active: rules.filter(r => r.active !== false).length,
-      });
-      setLastUpdated(new Date());
-    } catch (err) {
-      setError("Không thể tải dữ liệu dashboard");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     fetchAllStats();

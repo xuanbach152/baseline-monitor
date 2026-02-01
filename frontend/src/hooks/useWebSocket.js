@@ -26,6 +26,7 @@ export function useWebSocket(options = {}) {
     onViolationDeleted,
     onAgentUpdated,
     onAgentDeleted,
+    onAgentStatusChanged,
     onRuleUpdated,
     onRuleToggled,
     onRuleDeleted,
@@ -62,7 +63,7 @@ export function useWebSocket(options = {}) {
     try {
       const message = JSON.parse(event.data);
       
-      // Handle different event types
+     
       switch (message.event) {
         case 'connected':
           console.log('WebSocket connected:', message.data);
@@ -82,6 +83,10 @@ export function useWebSocket(options = {}) {
         
         case 'agent_updated':
           onAgentUpdated?.(message.data);
+          break;
+        
+        case 'agent_status_changed':
+          onAgentStatusChanged?.(message.data);
           break;
         
         case 'agent_deleted':
@@ -114,6 +119,7 @@ export function useWebSocket(options = {}) {
     onViolationResolved,
     onViolationDeleted,
     onAgentUpdated,
+    onAgentStatusChanged,
     onAgentDeleted,
     onRuleUpdated,
     onRuleToggled,
@@ -122,7 +128,7 @@ export function useWebSocket(options = {}) {
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      return; // Already connected
+      return; 
     }
 
     try {
@@ -147,7 +153,6 @@ export function useWebSocket(options = {}) {
         clearTimers();
         wsRef.current = null;
 
-        // Auto-reconnect if enabled
         if (shouldReconnectRef.current) {
           console.log(`Reconnecting in ${RECONNECT_DELAY / 1000}s...`);
           reconnectTimeoutRef.current = setTimeout(connect, RECONNECT_DELAY);
@@ -188,7 +193,7 @@ export function useWebSocket(options = {}) {
     return () => {
       disconnect();
     };
-  }, [autoConnect]); // Only run on mount/unmount
+  }, [autoConnect]); 
 
   return {
     isConnected,
